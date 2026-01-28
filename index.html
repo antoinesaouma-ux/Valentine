@@ -13,9 +13,7 @@
     --muted: #b3b3c6;
   }
 
-  * {
-    box-sizing: border-box;
-  }
+  * { box-sizing: border-box; }
 
   body {
     margin: 0;
@@ -30,59 +28,54 @@
   }
 
   .card {
+    width: 520px;
     background: var(--card);
     backdrop-filter: blur(24px);
     padding: 48px 56px;
     border-radius: 28px;
     text-align: center;
     box-shadow: 0 30px 80px rgba(0,0,0,0.45);
-    max-width: 520px;
   }
 
   .intro {
     font-size: 18px;
     line-height: 1.6;
     color: var(--muted);
-    margin-bottom: 28px;
+    margin-bottom: 24px;
   }
 
   h1 {
     font-size: 30px;
-    margin-bottom: 20px;
+    margin-bottom: 12px;
   }
 
   #message {
-    height: 24px;
-    margin-bottom: 28px;
+    height: 22px;
     font-size: 15px;
     color: var(--muted);
-    transition: opacity 0.3s ease;
+    margin-bottom: 28px;
   }
 
   .buttons {
     position: relative;
-    height: 90px;
     display: flex;
     justify-content: center;
-    align-items: center;
-    gap: 24px;
+    gap: 20px;
   }
 
   button {
-    border: none;
-    padding: 14px 38px;
+    padding: 14px 32px;
     font-size: 18px;
     border-radius: 999px;
+    border: none;
     cursor: pointer;
-    white-space: nowrap;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
 
   #oui {
     background: linear-gradient(135deg, #ff4d8d, #ff85b2);
     color: white;
-    box-shadow: 0 12px 36px rgba(255,77,141,0.4);
-    z-index: 2;
+    box-shadow: 0 12px 36px rgba(255,77,141,0.45);
   }
 
   #oui:hover {
@@ -93,9 +86,14 @@
     background: transparent;
     color: var(--muted);
     border: 1px solid rgba(255,255,255,0.35);
-    backdrop-filter: blur(10px);
+  }
+
+  /* 🐱 CHAT */
+  .cat {
     position: absolute;
-    right: 0;
+    font-size: 28px;
+    cursor: pointer;
+    transition: left 1.2s ease, top 1.2s ease, transform 0.3s ease;
   }
 </style>
 </head>
@@ -109,7 +107,6 @@
   </div>
 
   <h1>Veux‑tu être ma Valentine ? 💘</h1>
-
   <div id="message"></div>
 
   <div class="buttons" id="zone">
@@ -120,9 +117,9 @@
 
 <script>
   let nonCount = 0;
-  let fuiteActive = false;
   let ouiScale = 1;
-  let moveInterval = null;
+  let cat = null;
+  let catInterval = null;
 
   const nonBtn = document.getElementById("non");
   const ouiBtn = document.getElementById("oui");
@@ -141,38 +138,39 @@
     }
 
     if (nonCount === 2) {
-      message.innerText = "Prends encore une seconde 😌";
-      nonBtn.style.transform = "scale(0.85)";
+      message.innerText = "Réfléchis encore un peu 😌";
     }
 
     if (nonCount === 3) {
-      message.innerText = "Ok… il commence à paniquer 😈";
-      fuiteActive = true;
-      demarrerFuite();
-    }
+      message.innerText = "Ok… il se transforme en chat 🐱";
 
-    if (nonCount >= 3) {
+      nonBtn.remove();
+      creerChat();
+
       ouiScale += 0.15;
       ouiBtn.style.transform = `scale(${ouiScale})`;
     }
   }
 
-  function demarrerFuite() {
-    if (moveInterval) return;
+  function creerChat() {
+    cat = document.createElement("div");
+    cat.className = "cat";
+    cat.innerText = "🐱";
 
-    moveInterval = setInterval(() => {
-      const zoneRect = zone.getBoundingClientRect();
+    zone.appendChild(cat);
+    deplacerChat();
 
-      const maxX = zoneRect.width - nonBtn.offsetWidth;
-      const maxY = zoneRect.height - nonBtn.offsetHeight;
+    catInterval = setInterval(deplacerChat, 1400);
+  }
 
-      const x = Math.random() * maxX;
-      const y = Math.random() * maxY;
+  function deplacerChat() {
+    const rect = zone.getBoundingClientRect();
+    const x = Math.random() * (rect.width - 40);
+    const y = Math.random() * 20 - 10;
 
-      nonBtn.style.transition = "left 0.8s ease, top 0.8s ease";
-      nonBtn.style.left = x + "px";
-      nonBtn.style.top = y + "px";
-    }, 1200);
+    cat.style.left = x + "px";
+    cat.style.top = y + "px";
+    cat.style.transform = "scale(1.1)";
   }
 </script>
 
