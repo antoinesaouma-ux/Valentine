@@ -170,8 +170,22 @@ function createCat(opts = {}) {
       cat.style.transform = `scale(var(--scale,4))`;
     }
 
-    // 4) clamp sur l'écran pour éviter sortie
-    posX = clamp(posX, -FRAME_W*2, window.innerWidth - FRAME_W + FRAME_W*2);
+    // limites autorisées (petite marge visuelle)
+const OUT_LEFT = -FRAME_W * 0.5;
+const OUT_RIGHT = window.innerWidth - FRAME_W + FRAME_W * 0.5;
+
+// après le déplacement, ramener doucement si trop sorti
+if (posX < OUT_LEFT) {
+  // si trop à gauche, pousse doucement vers l'intérieur
+  posX += Math.max(1, (OUT_LEFT - posX) * 0.1);
+} else if (posX > OUT_RIGHT) {
+  // si trop à droite, pousse doucement vers l'intérieur
+  posX -= Math.max(1, (posX - OUT_RIGHT) * 0.1);
+}
+
+// clamp finale légère pour éviter artefacts
+posX = clamp(posX, -FRAME_W, window.innerWidth - FRAME_W + FRAME_W);
+
 
     // 5) appliquer position et frame
     cat.style.left = Math.round(posX) + 'px';
