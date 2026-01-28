@@ -2,170 +2,67 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Question importante 🤍</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sprite Grid Test</title>
 
 <style>
-:root {
-  --bg: #f6e7e2;
-  --card: #ffffff;
-  --text: #3a2f2f;
-  --accent: #e85a7a;
-}
-
 body {
   margin: 0;
   height: 100vh;
-  background: linear-gradient(135deg, #f3d1c8, #f6e7e2);
+  background: #111;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-family: "Segoe UI", sans-serif;
-  color: var(--text);
 }
 
-.card {
-  background: var(--card);
-  padding: 40px;
-  border-radius: 22px;
-  width: 420px;
-  text-align: center;
-  box-shadow: 0 30px 60px rgba(0,0,0,0.18);
-  position: relative;
-}
-
-h1 {
-  margin-top: 0;
-  font-size: 2em;
-}
-
-.buttons {
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-  margin-top: 30px;
-}
-
-button {
-  border: none;
-  border-radius: 999px;
-  padding: 16px 34px;
-  font-size: 1.2em;
-  cursor: pointer;
-  transition: transform 0.25s ease;
-}
-
-#oui {
-  background: var(--accent);
-  color: white;
-}
-
-#non {
-  background: #eee;
-  color: var(--text);
-}
-
-#message {
-  margin-top: 20px;
-  min-height: 24px;
-  font-size: 1.1em;
-}
-
-/* 🐱 CHAT SPRITE */
 .cat {
-  position: absolute;
-  width: 160px;
-  height: 160px;
+  width: 32px;   /* taille d’UNE case */
+  height: 32px;
+
+  image-rendering: pixelated;
 
   background-image: url("image/cat.png");
   background-repeat: no-repeat;
-  background-size: auto 100%;
-
-  animation:
-    run 0.8s steps(6) infinite,
-    move 1.2s infinite alternate ease-in-out;
-
-  pointer-events: none;
-}
-
-@keyframes run {
-  from { background-position: 0 0; }
-  to   { background-position: -960px 0; }
-}
-
-@keyframes move {
-  from { transform: translateX(0); }
-  to   { transform: translateX(40px); }
 }
 </style>
 </head>
 
 <body>
-
-<div class="card">
-  <h1>Tu veux être ma Valentine ? 🤍</h1>
-
-  <div class="buttons">
-    <button id="oui">Oui ✨</button>
-    <button id="non">Non 🙈</button>
-  </div>
-
-  <div id="message"></div>
-</div>
+  <div class="cat" id="cat"></div>
 
 <script>
-let nonCount = 0;
-let ouiScale = 1;
+/* ⚙️ PARAMÈTRES À AJUSTER */
+const frameWidth = 32;
+const frameHeight = 32;
 
-const nonBtn = document.getElementById("non");
-const ouiBtn = document.getElementById("oui");
-const message = document.getElementById("message");
+/* ✅ FRAMES À JOUER (col, row) */
+/* Tu choisis les poses que tu veux */
+const frames = [
+  [0, 4],
+  [1, 4],
+  [2, 4],
+  [3, 4],
+  [4, 4],
+  [5, 4]
+];
 
-nonBtn.addEventListener("click", () => {
-  nonCount++;
-  ouiScale += 0.18;
-  ouiBtn.style.transform = `scale(${ouiScale})`;
+/* 🔁 PING-PONG */
+let index = 0;
+let direction = 1;
 
-  if (nonCount === 1) message.textContent = "Tu hésites 😼";
-  if (nonCount === 2) message.textContent = "Il s’énerve un peu…";
+const cat = document.getElementById("cat");
 
-  if (nonCount === 3) {
-    message.textContent = "Trop tard… il détale 🐾";
-    spawnCat();
-    nonBtn.remove();
+setInterval(() => {
+  const [col, row] = frames[index];
+
+  cat.style.backgroundPosition =
+    `-${col * frameWidth}px -${row * frameHeight}px`;
+
+  index += direction;
+
+  if (index === frames.length - 1 || index === 0) {
+    direction *= -1;
   }
-});
-
-ouiBtn.addEventListener("click", () => {
-  document.body.innerHTML = `
-    <div style="font-size:2.2em;color:#3a2f2f;">
-      🤍 OUI 🤍<br><br>
-      J’en étais sûr.
-    </div>`;
-});
-
-function spawnCat() {
-  const cat = document.createElement("div");
-  cat.className = "cat";
-  document.body.appendChild(cat);
-
-  let x = window.innerWidth / 2 - 80;
-  let y = window.innerHeight / 2 - 80;
-
-  cat.style.left = x + "px";
-  cat.style.top = y + "px";
-
-  setInterval(() => {
-    x += Math.random() * 300 - 150;
-    y += Math.random() * 200 - 100;
-
-    x = Math.max(0, Math.min(window.innerWidth - 160, x));
-    y = Math.max(0, Math.min(window.innerHeight - 160, y));
-
-    cat.style.left = x + "px";
-    cat.style.top = y + "px";
-  }, 900);
-}
+}, 120); // vitesse animation
 </script>
 
 </body>
