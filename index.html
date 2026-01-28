@@ -5,113 +5,112 @@
 <title>Pour toi 💘</title>
 
 <style>
-  :root {
-    --bg: #0f1220;
-    --card: rgba(255,255,255,0.08);
-    --text: #ffffff;
-    --accent: #ff4d8d;
-    --muted: #b3b3c6;
-  }
+:root {
+  --bg: #0f1220;
+  --card: rgba(255,255,255,0.08);
+  --text: #ffffff;
+  --accent: #ff4d8d;
+  --muted: #b3b3c6;
+}
 
-  * { box-sizing: border-box; }
+* { box-sizing: border-box; }
 
-  body {
-    margin: 0;
-    height: 100vh;
-    background: radial-gradient(circle at top, #1a1f3c, #0f1220);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: "Inter", system-ui, sans-serif;
-    color: var(--text);
-    overflow: hidden;
-  }
+body {
+  margin: 0;
+  height: 100vh;
+  background: radial-gradient(circle at top, #1a1f3c, #0f1220);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: system-ui, sans-serif;
+  color: var(--text);
+  overflow: hidden;
+}
 
-  .card {
-    width: 520px;
-    background: var(--card);
-    backdrop-filter: blur(24px);
-    padding: 48px 56px;
-    border-radius: 28px;
-    text-align: center;
-    box-shadow: 0 30px 80px rgba(0,0,0,0.45);
-    z-index: 2;
-  }
+/* 💌 CARD */
+.card {
+  width: 520px;
+  background: var(--card);
+  backdrop-filter: blur(24px);
+  padding: 48px 56px;
+  border-radius: 28px;
+  text-align: center;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.45);
+  z-index: 2;
+}
 
-  .intro {
-    font-size: 18px;
-    line-height: 1.6;
-    color: var(--muted);
-    margin-bottom: 24px;
-  }
+.intro {
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
 
-  h1 {
-    font-size: 30px;
-    margin-bottom: 12px;
-  }
+h1 {
+  font-size: 30px;
+  margin-bottom: 12px;
+}
 
-  #message {
-    height: 22px;
-    font-size: 15px;
-    color: var(--muted);
-    margin-bottom: 28px;
-  }
+#message {
+  height: 22px;
+  font-size: 15px;
+  color: var(--muted);
+  margin-bottom: 28px;
+}
 
-  .buttons {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-  }
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
 
-  button {
-    padding: 14px 32px;
-    font-size: 18px;
-    border-radius: 999px;
-    border: none;
-    cursor: pointer;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-  }
+button {
+  padding: 14px 32px;
+  font-size: 18px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+}
 
-  #oui {
-    background: linear-gradient(135deg, #ff4d8d, #ff85b2);
-    color: white;
-    box-shadow: 0 12px 36px rgba(255,77,141,0.45);
-  }
+#oui {
+  background: linear-gradient(135deg, #ff4d8d, #ff85b2);
+  color: white;
+}
 
-  #oui:hover {
-    transform: scale(1.05);
-  }
+#oui:hover {
+  transform: scale(1.05);
+}
 
-  #non {
-    background: transparent;
-    color: var(--muted);
-    border: 1px solid rgba(255,255,255,0.35);
-  }
+#non {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid rgba(255,255,255,0.35);
+}
 
-  /* 🐱 CHAT PIXEL */
-  .pixel-cat {
-    position: fixed;
-    bottom: 24px;
-    left: -80px;
-    font-size: 32px;
-    font-family: monospace;
-    image-rendering: pixelated;
-    animation: walk 10s linear infinite,
-               step 0.6s steps(2) infinite;
-    opacity: 0;
-    pointer-events: none;
-  }
+/* 🐱 CHAT PIXEL (VRAI) */
+#pixel-cat {
+  position: fixed;
+  width: 48px;
+  height: 32px;
+  background:
+    linear-gradient(#000 0 0) 8px 4px / 8px 8px,
+    linear-gradient(#000 0 0) 24px 4px / 8px 8px,
+    linear-gradient(#000 0 0) 8px 12px / 32px 12px,
+    linear-gradient(#000 0 0) 8px 24px / 8px 8px,
+    linear-gradient(#000 0 0) 24px 24px / 8px 8px;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  z-index: 1;
+  opacity: 0;
+  transition: left 1.2s linear, top 1.2s linear;
+  animation: run 0.4s steps(2) infinite;
+}
 
-  @keyframes walk {
-    from { left: -80px; }
-    to   { left: 110%; }
-  }
-
-  @keyframes step {
-    0%   { transform: translateY(0); }
-    50%  { transform: translateY(-2px); }
-    100% { transform: translateY(0); }
-  }
+@keyframes run {
+  0%   { transform: translateY(0); }
+  50%  { transform: translateY(-2px); }
+  100% { transform: translateY(0); }
+}
 </style>
 </head>
 
@@ -132,35 +131,49 @@
   </div>
 </div>
 
-<div class="pixel-cat" id="cat">🐈‍⬛</div>
+<!-- 🐱 CHAT -->
+<div id="pixel-cat"></div>
 
 <script>
-  let nonCount = 0;
-  const nonBtn = document.getElementById("non");
-  const message = document.getElementById("message");
-  const cat = document.getElementById("cat");
+let nonCount = 0;
+const nonBtn = document.getElementById("non");
+const message = document.getElementById("message");
+const cat = document.getElementById("pixel-cat");
 
-  function oui() {
-    alert("💖 J’étais sûr de toi 💖");
+function oui() {
+  alert("💖 J’étais sûr de toi 💖");
+}
+
+function nonClique() {
+  nonCount++;
+
+  if (nonCount === 1) {
+    message.innerText = "Hmm… tu es sûre de toi ?";
   }
 
-  function nonClique() {
-    nonCount++;
-
-    if (nonCount === 1) {
-      message.innerText = "Hmm… tu es sûre de toi ?";
-    }
-
-    if (nonCount === 2) {
-      message.innerText = "Réfléchis encore un peu 😌";
-    }
-
-    if (nonCount === 3) {
-      message.innerText = "Ok… il préfère partir discrètement 🐾";
-      nonBtn.remove();
-      cat.style.opacity = 1;
-    }
+  if (nonCount === 2) {
+    message.innerText = "Réfléchis encore un peu 😌";
   }
+
+  if (nonCount === 3) {
+    message.innerText = "Ok… le chat panique et s’enfuit 🐾";
+    nonBtn.remove();
+    activerChat();
+  }
+}
+
+function activerChat() {
+  cat.style.opacity = 1;
+  deplacerChat();
+  setInterval(deplacerChat, 1400);
+}
+
+function deplacerChat() {
+  const x = Math.random() * (window.innerWidth - 60);
+  const y = Math.random() * (window.innerHeight - 60);
+  cat.style.left = x + "px";
+  cat.style.top = y + "px";
+}
 </script>
 
 </body>
