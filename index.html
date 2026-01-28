@@ -3,332 +3,244 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Chat — interaction</title>
+  <title>Veux-tu être ma Valentine ? 💌</title>
   <style>
     :root{
-      --scale: 4;
-      --accent: #7c5cff;
+      --card-size: min(520px, 86vw);
       --bg: #0f1020;
-      --glass: rgba(255,255,255,0.04);
+      --card-bg: linear-gradient(180deg,#161626 0%, #0f1120 100%);
+      --accent: #ff6fa3;
+      --glass: rgba(255,255,255,0.03);
+      --text: #ecebf6;
+      --muted: #bfc0d9;
     }
-    html,body{
-      height:100%;
-      margin:0;
-      background:var(--bg);
-      overflow:hidden;
-      font-family:Inter, "Segoe UI", Roboto, system-ui, -apple-system, "Helvetica Neue", Arial;
-      color: #e8e8f0;
+    html,body{height:100%;margin:0;background:var(--bg);font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; color:var(--text); display:flex; align-items:center; justify-content:center;}
+    /* Container centré */
+    .stage{position:relative; width:100%; height:100vh; overflow:hidden; display:flex; align-items:center; justify-content:center; padding:24px;}
+    /* Card carré */
+    .card {
+      width: var(--card-size);
+      height: var(--card-size);
+      background: var(--card-bg);
+      border-radius: 18px;
+      box-shadow: 0 14px 40px rgba(2,6,23,0.6);
+      border: 1px solid rgba(255,255,255,0.04);
+      padding: 28px;
+      box-sizing: border-box;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      position:relative;
+      z-index: 10;
     }
-
-/* --- Pixel cat sprite --- */
-.cat{
-  position:absolute;
-  width: var(--frame-w,32px);
-  height: var(--frame-h,32px);
-  background-image: url("image/cat.png"); /* <-- adapte le chemin si besoin */
-  background-repeat: no-repeat;
-  image-rendering: pixelated;
-  transform-origin: center;
-  will-change: left, top, background-position, transform;
-  pointer-events:none;
-}
-
-/* --- Overlay UI --- */
-.overlay {
-  position: absolute;
-  inset: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-.card {
-  pointer-events: auto;
-  width: min(720px, 92%);
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  border-radius: 14px;
-  padding: 22px;
-  box-shadow: 0 6px 30px rgba(0,0,0,0.6);
-  border: 1px solid rgba(255,255,255,0.04);
-  display: grid;
-  gap: 12px;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-}
-.card h1{ margin:0; font-size:18px; }
-.card p{ margin:0; color:#bfc0d9; font-size:13px; }
-
-.controls { display:flex; gap:12px; align-items:center; }
-
-.btn {
-  height:44px;
-  padding: 0 16px;
-  border-radius: 10px;
-  font-weight:600;
-  background:var(--glass);
-  color: #fff;
-  border: 1px solid rgba(255,255,255,0.05);
-  cursor:pointer;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  transition: transform 220ms cubic-bezier(.2,.9,.3,1), opacity 220ms, left 800ms ease;
-  user-select:none;
-  position:relative;
-}
-.btn.primary {
-  background: linear-gradient(90deg, var(--accent), #5be3ff);
-  color: #061223;
-  border: none;
-  box-shadow: 0 6px 18px rgba(124,92,255,0.18);
-}
-.btn.secondary { background: transparent; border: 1px solid rgba(255,255,255,0.06); }
-
-.toast {
-  grid-column: 1 / -1;
-  color: #d6d7ff;
-  font-size:13px;
-  opacity:0;
-  transform: translateY(6px);
-  transition: opacity 220ms, transform 220ms;
-  pointer-events:none;
-}
-.toast.show { opacity:1; transform: translateY(0); }
-
-.note {
-  position: absolute;
-  left: 18px;
-  bottom: 18px;
-  color: rgba(255,255,255,0.28);
-  font-size:12px;
-}
-
-@media (max-width:520px){
-  .card{ padding:14px; grid-template-columns:1fr; gap:10px; }
-  .controls{ justify-content:flex-end; }
-}
+    .lines { font-size:15px; color:var(--muted); line-height:1.35; max-width:86%; }
+    .lines .l1{ font-weight:600; color:var(--text); font-size:17px; }
+    h1 { margin: 6px 0 0 0; font-size:20px; letter-spacing:0.2px; }
+    .controls { margin-top:12px; display:flex; gap:12px; align-items:center; }
+    .btn {
+      padding: 12px 18px;
+      border-radius: 12px;
+      border: none;
+      cursor:pointer;
+      font-weight:700;
+      background:var(--glass);
+      color:var(--text);
+      min-width:96px;
+      transition: transform 220ms cubic-bezier(.2,.9,.3,1), opacity 220ms;
+    }
+    .btn.primary { background: linear-gradient(90deg,#ffd1e6, #ff9cc9); color:#3b0622; box-shadow: 0 8px 20px rgba(255,110,170,0.12); }
+    .btn.secondary { background: transparent; border: 1px solid rgba(255,255,255,0.06); color:var(--text); }
+    .toast { position:absolute; bottom:16px; left:50%; transform:translateX(-50%); color:var(--muted); font-size:13px; opacity:0; transition:opacity 220ms, transform 220ms; pointer-events:none; }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    .note { position:absolute; left:18px; bottom:18px; color: rgba(255,255,255,0.16); font-size:12px; z-index:9; }
+    /* Pixel cats (created dynamically) */
+    .cat { position: absolute; width: var(--frame-w,32px); height: var(--frame-h,32px); background-image: url("image/cat.png"); background-repeat:no-repeat; image-rendering: pixelated; pointer-events:none; transform-origin:center; will-change:left,top,background-position,transform; z-index:8; }
+    @media (max-width:420px){
+      .card{ padding:18px; border-radius:12px; }
+      h1{ font-size:18px; }
+    }
   </style>
 </head>
 <body>
+  <div class="stage" id="stage">
 
-  <!-- Overlay question -->
-  <div class="overlay" id="overlay">
-    <div class="card" role="dialog" aria-modal="true" aria-label="Question">
-      <div>
-        <h1>Veux-tu adopter un chat ? 🐱</h1>
-        <p>Ils sont mignons, joueurs et parfois taquins. Clique :</p>
-      </div>
+<div class="card" role="dialog" aria-label="Question">
+  <div class="lines">
+    <div class="l1">Depuis que tu es entrée dans ma vie, chaque instant a retrouvé du goût.</div>
+    <div>Ton rire chasse mon ciel le plus gris, et ton regard m'apprend le courage.</div>
+  </div>
 
-  <div class="controls">
-    <button id="yesBtn" class="btn primary">Oui</button>
+  <h1>Veux‑tu être ma Valentine ? 💘</h1>
+
+  <div class="controls" id="controls">
+    <button id="yesBtn" class="btn primary">Oui 💖</button>
     <button id="noBtn" class="btn secondary">Non</button>
   </div>
 
   <div class="toast" id="toast">Oh vraiment ?</div>
 </div>
+
+<div class="note">Astuce : bouge la souris pour voir les chats réagir (après le 3ᵉ non).</div>
   </div>
 
-  <div class="note">Astuce : bouge la souris pour voir les chats réagir.</div>
-
   <script>
-    /* ===========================
-       RÉGLAGES
-       =========================== */
-    const FRAME_W = 32;
-    const FRAME_H = 32;
-    const FRAMES_PER_ROW = 8;
+    /* ============= RÉGLAGES ============= */
+    // Sprite sheet : place ta feuille de frames ici (par défaut image/cat.png)
+    // Si ton sprite se trouve ailleurs, change la propriété CSS .cat { background-image: url("..."); }
+    const FRAME_W = 32, FRAME_H = 32;
+    const FRAMES_PER_ROW = 8; // colonnes dans la sprite-sheet
     document.documentElement.style.setProperty('--frame-w', FRAME_W + 'px');
     document.documentElement.style.setProperty('--frame-h', FRAME_H + 'px');
 
+    // Animations (row indices start at 0)
     const animations = {
       idle: { row: 7, frames: 4, speed: 500, move: 0 },
-      walk: { row: 4, frames: FRAMES_PER_ROW, speed: 120, move: 1.2 },
-      run:  { row: 5, frames: FRAMES_PER_ROW, speed: 80,  move: 2.6 }
+      walk: { row: 4, frames: FRAMES_PER_ROW, speed: 120, move: 1.0 },
+      run:  { row: 5, frames: FRAMES_PER_ROW, speed: 80,  move: 2.4 }
     };
 
-    function getAnimSafe(name){
-      const a = animations[name];
-      if (!a) return animations.idle;
-      return a;
-    }
+    // Utility
+    const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
 
-    function clamp(v, a, b){ return Math.min(Math.max(v, a), b); }
-
-    /* ===========================
-       createCat
-       =========================== */
+    // Create a single cat DOM and handle simple frame cycling + horizontal movement
     function createCat(opts = {}) {
-      const startX = opts.x ?? 120;
-      const startY = opts.y ?? 220;
-      let state = opts.anim ?? 'idle';
       const cat = document.createElement('div');
       cat.className = 'cat';
-      cat.style.left = startX + 'px';
-      cat.style.top = startY + 'px';
+      cat.style.left = (opts.x || 80) + 'px';
+      cat.style.top  = (opts.y || (window.innerHeight - 140)) + 'px';
+      cat._anim = animations[opts.anim || 'idle'];
+      cat._frameIndex = 0;
+      cat._lastFrameTime = performance.now();
+      cat._dir = Math.random() > 0.5 ? 1 : -1; // 1 -> right, -1 -> left
       document.body.appendChild(cat);
 
-      let posX = startX;
-      let lastFrameChange = performance.now();
-      let frameIndex = 0;
-      let lastTick = performance.now();
-      let currentAnim = getAnimSafe(state);
-
-      let mouseX = window.innerWidth / 2;
-      window.addEventListener('mousemove', e => mouseX = e.clientX);
-
-      function setState(name){
-        currentAnim = getAnimSafe(name);
-        frameIndex = 0;
-        lastFrameChange = performance.now();
-      }
-
       function updateFrame(now){
-        if (now - lastFrameChange >= currentAnim.speed) {
-          frameIndex = (frameIndex + 1) % Math.max(1, currentAnim.frames);
-          lastFrameChange = now;
-          const bgX = -frameIndex * FRAME_W;
-          const bgY = -currentAnim.row * FRAME_H;
-          cat.style.backgroundPosition = `${bgX}px ${bgY}px`;
+        const a = cat._anim;
+        if (!a) return;
+        if (now - cat._lastFrameTime > a.speed) {
+          cat._frameIndex = (cat._frameIndex + 1) % a.frames;
+          cat._lastFrameTime = now;
+          const px = -cat._frameIndex * FRAME_W;
+          const py = -a.row * FRAME_H;
+          cat.style.backgroundPosition = px + 'px ' + py + 'px';
         }
       }
 
+      let posX = parseFloat(cat.style.left);
       function tick(now){
-        const dt = Math.min(60, now - lastTick);
-        lastTick = now;
-
-        const centerX = posX + FRAME_W/2;
-        const d = Math.abs(centerX - mouseX);
-
-        if (d < 120) {
-          setState('run');
-        } else if (d < 280) {
-          setState('walk');
-        } else {
-          setState('idle');
+        // movement
+        if (cat._anim.move !== 0) {
+          posX += cat._anim.move * cat._dir * 0.9;
+          // bounce at edges
+          if (posX < 8) { posX = 8; cat._dir = 1; cat.style.transform = 'scaleX(1)'; }
+          if (posX > window.innerWidth - FRAME_W - 8) { posX = window.innerWidth - FRAME_W - 8; cat._dir = -1; cat.style.transform = 'scaleX(-1)'; }
         }
-
-        const dirToMouse = centerX - mouseX;
-        if (currentAnim.move > 0) {
-          if (Math.abs(dirToMouse) < 420) {
-            if (dirToMouse < 0) {
-              posX -= currentAnim.move;
-              cat.style.transform = `scale(var(--scale,4)) scaleX(-1)`;
-            } else {
-              posX += currentAnim.move;
-              cat.style.transform = `scale(var(--scale,4)) scaleX(1)`;
-            }
-          }
-        } else {
-          cat.style.transform = `scale(var(--scale,4))`;
-        }
-
-        // nudge back (correction douce si sortie)
-        const OUT_LEFT = -FRAME_W * 0.5;
-        const OUT_RIGHT = window.innerWidth - FRAME_W + FRAME_W * 0.5;
-
-        if (posX < OUT_LEFT) {
-          posX += Math.max(0.5, (OUT_LEFT - posX) * 0.12);
-        } else if (posX > OUT_RIGHT) {
-          posX -= Math.max(0.5, (posX - OUT_RIGHT) * 0.12);
-        }
-
-        posX = clamp(posX, -FRAME_W, window.innerWidth - FRAME_W + FRAME_W);
-
+        // gentle correction to keep in viewport
+        posX = clamp(posX, -FRAME_W, window.innerWidth - FRAME_W);
         cat.style.left = Math.round(posX) + 'px';
         updateFrame(now);
-        requestAnimationFrame(tick);
+        cat._raf = requestAnimationFrame(tick);
       }
+      cat._raf = requestAnimationFrame(tick);
 
-      cat.style.backgroundPosition = `0px ${-currentAnim.row * FRAME_H}px`;
-      cat.style.transform = `scale(var(--scale,4))`;
-      requestAnimationFrame(tick);
-
-      return { el: cat, setState };
+      // expose a destroy helper
+      cat.destroy = () => {
+        cancelAnimationFrame(cat._raf);
+        if (cat.parentNode) cat.parentNode.removeChild(cat);
+      };
+      return cat;
     }
 
-    /* ===========================
-       Création initiale et UI
-       =========================== */
-    const initialCats = [
-      { x: 120, y: 220, anim: 'idle' },
-      { x: 420, y: 320, anim: 'walk' },
-      { x: 760, y: 420, anim: 'idle' }
-    ];
-    const createdCats = [];
-    initialCats.forEach(cfg => createdCats.push(createCat(cfg)));
-
-    const noBtn = document.getElementById('noBtn');
+    /* ============= LOGIQUE UI ============= */
     const yesBtn = document.getElementById('yesBtn');
+    const noBtn  = document.getElementById('noBtn');
     const toast  = document.getElementById('toast');
     let noClicks = 0;
     let noEscaped = false;
+    const createdCats = [];
 
-    function showToast(msg, t = 1500){
+    function showToast(msg, t = 1400){
       toast.textContent = msg;
       toast.classList.add('show');
       clearTimeout(toast._timeout);
       toast._timeout = setTimeout(()=> toast.classList.remove('show'), t);
     }
 
-    noBtn.addEventListener('click', (e) => {
+    noBtn.addEventListener('click', () => {
       if (noEscaped) return;
       noClicks++;
-      showToast(["Tu es sûr ?", "Vraiment ?", "Bon d'accord..."][Math.min(2, noClicks-1)]);
+      const msgs = ["Tu es sûre ?", "Vraiment ?", "Oh... d'accord, attends..."];
+      showToast(msgs[Math.min(msgs.length-1, noClicks-1)]);
+      // bouton qui rétrécit
       const scale = Math.max(0.45, 1 - noClicks * 0.22);
       noBtn.style.transform = `scale(${scale})`;
       noBtn.style.transition = 'transform 260ms cubic-bezier(.2,.9,.3,1)';
 
       if (noClicks >= 3) {
         noEscaped = true;
+        // animation d'échappement du bouton
         const rect = noBtn.getBoundingClientRect();
         const startLeft = rect.left;
-        const endLeft = window.innerWidth + 120;
-        const duration = 900;
+        const endLeft = window.innerWidth + 160;
+        const duration = 860;
         const start = performance.now();
-
         noBtn.style.pointerEvents = 'none';
-
-        function animateBtn(t){
-          const p = Math.min(1, (t - start) / duration);
+        function animate(t){
+          const p = clamp((t - start)/duration, 0, 1);
           const ease = 1 - Math.pow(1 - p, 3);
           const cur = startLeft + (endLeft - startLeft) * ease;
           noBtn.style.position = 'fixed';
-          noBtn.style.left = cur + 'px';
+          noBtn.style.left = (cur) + 'px';
           noBtn.style.top = rect.top + 'px';
           noBtn.style.zIndex = 9999;
-          if (p < 1) requestAnimationFrame(animateBtn);
+          if (p < 1) requestAnimationFrame(animate);
           else {
-            addMoreCatsAfterEscape();
-            const overlay = document.getElementById('overlay');
-            if (overlay) overlay.style.pointerEvents = 'none';
+            // après la fuite, créer les chats (uniquement ici)
+            spawnCatsAfterEscape();
+            // rendre le reste du card non interactif si souhaité
+            // document.querySelector('.card').style.pointerEvents = 'none';
           }
         }
-        requestAnimationFrame(animateBtn);
+        requestAnimationFrame(animate);
       }
     });
 
     yesBtn.addEventListener('click', () => {
-      showToast("Trop bien ! 🐾", 1200);
+      showToast("Oui ! 💞", 1200);
       yesBtn.disabled = true;
-      yesBtn.style.opacity = 0.8;
+      yesBtn.style.opacity = 0.85;
     });
 
-    function addMoreCatsAfterEscape(){
+    // Crée les chats uniquement après le 3ème click sur "Non"
+    function spawnCatsAfterEscape(){
       const w = window.innerWidth;
       const h = window.innerHeight;
-      for (let i=0;i<5;i++){
-        const x = Math.floor(60 + Math.random() * Math.max(200, w - 120));
-        const y = Math.floor(Math.max(80, h - 180 - Math.random() * 260));
-        createdCats.push(createCat({ x, y, anim: Math.random() > 0.5 ? 'idle' : 'walk' }));
+      const baseY = Math.max(120, h - 160);
+      // nombre de chats : change ici si tu veux
+      const N = 5;
+      for (let i=0;i<N;i++){
+        const x = Math.floor(40 + Math.random() * (Math.max(200, w - 160)));
+        const y = baseY - Math.floor(Math.random() * 40);
+        const anim = Math.random() > 0.5 ? 'walk' : 'idle';
+        const cat = createCat({ x, y, anim });
+        // petits offsets et variations
+        cat.style.top = (y + Math.floor(Math.random()*24)) + 'px';
+        createdCats.push(cat);
       }
-      showToast("Ils sont arrivés !", 1800);
+      showToast("Ils sont là... 🐾", 1400);
     }
 
-    document.documentElement.style.setProperty('--scale', 4);
-
-    window.addEventListener('resize', () => {
-      // rien de critique ici
+    // Optionnel : nettoyer les chats (debug)
+    window.addEventListener('beforeunload', () => {
+      createdCats.forEach(c => c.destroy && c.destroy());
     });
+
+    // Si tu veux tester directement : décommenter la ligne suivante
+    // spawnCatsAfterEscape();
+
   </script>
 </body>
 </html>
