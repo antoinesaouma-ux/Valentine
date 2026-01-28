@@ -40,3 +40,45 @@
 
   nonBtn.addEventListener("mouseover", fuir);
 </script>
+
+  let nonCount = 0;
+  let fuiteActive = false;
+
+  const nonBtn = document.getElementById("non");
+  const message = document.getElementById("message");
+
+  function oui() {
+    alert("💖 J’étais sûr de toi 💖");
+  }
+
+  function nonClique() {
+    nonCount++;
+
+    if (nonCount === 1) {
+      message.innerText = "🤔 Je pense que tu t’es trompée… réessaie 😉";
+    }
+
+    if (nonCount === 2) {
+      message.innerText = "😏 Hmm… vraiment ? Réfléchis encore";
+      nonBtn.style.transform = "scale(0.7)";
+    }
+
+    if (nonCount === 3) {
+      message.innerText = "😈 Trop tard… maintenant il fuit 😏";
+      fuiteActive = true;
+    }
+  }
+
+  function fuir() {
+    if (!fuiteActive) return;
+
+    const x = Math.random() * (window.innerWidth - nonBtn.offsetWidth);
+    const y = Math.random() * (window.innerHeight - nonBtn.offsetHeight);
+
+    nonBtn.style.position = "absolute";
+    nonBtn.style.left = x + "px";
+    nonBtn.style.top = y + "px";
+  }
+
+  nonBtn.addEventListener("mouseover", fuir);
+</script>
