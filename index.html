@@ -1,308 +1,343 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Veux-tu être ma Valentine ? 💌</title>
+  <title>Pour toi 💘</title>
   <style>
     :root{
-      --card-size: min(520px, 86vw);
       --bg: #0f1020;
       --card-bg: linear-gradient(180deg,#161626 0%, #0f1120 100%);
-      --accent: #ff6fa3;
-      --glass: rgba(255,255,255,0.03);
       --text: #ecebf6;
-      --muted: #bfc0d9;
+      --muted: #9b9bb3;
+      --accent: #ff6fa3;
+      --cat-scale: 4;          /* échelle par défaut des sprites (modifie si besoin) */
+      --frames-per-row: 8;     /* colonnes connues de ta sprite-sheet */
+      --default-frame-w: 32;   /* fallback si auto-détection échoue */
+      --default-frame-h: 32;
+    }
 
-  /* Échelle des chats (scale entier) */
-  --cat-scale: 4;
-  --frame-w: 32; /* largeur d'une frame en px (non multipliée) */
-  --frame-h: 32; /* hauteur d'une frame en px */
-  --frames-per-row: 8;
-  --sheet-rows: 8; /* nombre total de lignes (rows) dans la sprite sheet */
-}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Arial,Helvetica;display:flex;align-items:center;justify-content:center;}
+    .container{
+      width:min(820px,92vw);
+      padding:36px;
+    }
 
-html,body{height:100%;margin:0;background:var(--bg);font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; color:var(--text); display:flex; align-items:center; justify-content:center;}
-.stage{position:relative; width:100%; height:100vh; overflow:hidden; display:flex; align-items:center; justify-content:center; padding:24px;}
-.card {
-  width: var(--card-size);
-  height: var(--card-size);
-  background: var(--card-bg);
-  border-radius: 18px;
-  box-shadow: 0 14px 40px rgba(2,6,23,0.6);
-  border: 1px solid rgba(255,255,255,0.04);
-  padding: 28px;
-  box-sizing: border-box;
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  position:relative;
-  z-index: 10;
-}
-.lines { font-size:15px; color:var(--muted); line-height:1.35; max-width:86%; }
-.lines .l1{ font-weight:600; color:var(--text); font-size:17px; }
-h1 { margin: 6px 0 0 0; font-size:20px; letter-spacing:0.2px; }
-.controls { margin-top:12px; display:flex; gap:12px; align-items:center; }
-.btn {
-  padding: 12px 18px;
-  border-radius: 12px;
-  border: none;
-  cursor:pointer;
-  font-weight:700;
-  background:var(--glass);
-  color:var(--text);
-  min-width:96px;
-  transition: transform 220ms cubic-bezier(.2,.9,.3,1), opacity 220ms;
-  position:relative;
-}
-.btn.primary { background: linear-gradient(90deg,#ffd1e6, #ff9cc9); color:#3b0622; box-shadow: 0 8px 20px rgba(255,110,170,0.12); }
-.btn.secondary { background: transparent; border: 1px solid rgba(255,255,255,0.06); color:var(--text); }
-.toast { position:absolute; bottom:16px; left:50%; transform:translateX(-50%); color:var(--muted); font-size:13px; opacity:0; transition:opacity 220ms, transform 220ms; pointer-events:none; }
-.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-.note { position:absolute; left:18px; bottom:18px; color: rgba(255,255,255,0.16); font-size:12px; z-index:9; }
+    .card{
+      background:var(--card-bg);
+      border-radius:16px;
+      padding:28px;
+      box-shadow: 0 8px 30px rgba(3,6,23,0.6);
+      position:relative;
+      overflow:visible;
+    }
+    h1{margin:0 0 12px 0;font-size:20px}
+    p.lead{margin:0 0 16px;color:var(--muted)}
 
-/* --- Pixel cats scaled proprement --- */
-.cat{
-  position:absolute;
-  width: calc(var(--frame-w) * var(--cat-scale) * 1px);
-  height: calc(var(--frame-h) * var(--cat-scale) * 1px);
-  background-image: url("image/cat.png"); /* <-- adapte le chemin si besoin */
-  background-repeat: no-repeat;
-  image-rendering: pixelated;
-  pointer-events:none;
-  transform-origin: center;
-  will-change: left, top, background-position, transform;
-  z-index: 8;
-}
+    .actions{display:flex;gap:12px;align-items:center;margin-top:14px}
+    button.btn{
+      background:transparent;
+      color:var(--text);
+      border:1px solid rgba(255,255,255,0.06);
+      padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:600;
+    }
+    button.btn.yes{background:linear-gradient(90deg,var(--accent),#ff8fb3);color:#0b0720;border:none}
+    button.btn:disabled{opacity:0.6;cursor:default}
 
-@media (max-width:420px){
-  .card{ padding:18px; border-radius:12px; }
-  h1{ font-size:18px; }
-}
+    /* toast simple */
+    .toast{
+      position:fixed;
+      left:50%;
+      transform:translateX(-50%);
+      bottom:28px;
+      background:rgba(0,0,0,0.45);
+      color:var(--text);
+      padding:10px 16px;border-radius:10px;font-weight:600;backdrop-filter: blur(4px);
+      opacity:0;transition:opacity 220ms ease;pointer-events:none;z-index:1100;
+    }
+    .toast.show{opacity:1;pointer-events:auto}
+
+    /* GIF de célébration (apparaît au-dessus du message) */
+    .celebration-gif{
+      position:absolute;
+      left:50%;
+      transform:translateX(-50%) translateY(-8px);
+      pointer-events:none;
+      width:160px;
+      max-width:40vw;
+      opacity:0;
+      transition: opacity 260ms ease, transform 260ms ease;
+      z-index:99999;
+      filter: drop-shadow(0 8px 22px rgba(0,0,0,0.45));
+    }
+    .celebration-gif.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+    /* container pour chats (occupant tout l'écran pour faciliter position ABS) */
+    .stage{
+      position:fixed;
+      inset:0;
+      pointer-events:none; /* ne pas bloquer la souris */
+      z-index:50;
+      overflow:visible;
+    }
+    /* classe appliquée à chaque chat (taille / sprite background) */
+    .cat{
+      position:absolute;
+      width:32px; /* sera recalculé par JS via scale */
+      height:32px;
+      background-image:url("image/cat.png");
+      background-repeat:no-repeat;
+      image-rendering: pixelated;
+      will-change: transform, background-position;
+      transform-origin: left top;
+      pointer-events:none;
+    }
+    /* petit conseil responsive */
+    @media (max-width:420px){
+      .celebration-gif{width:120px}
+    }
   </style>
 </head>
 <body>
-  <div class="stage" id="stage">
-    <div class="card" role="dialog" aria-label="Question">
-      <div class="lines">
-        <div class="l1">Depuis que tu es entrée dans ma vie, chaque instant a retrouvé du goût.</div>
-        <div>Ton rire chasse mon ciel le plus gris, et ton regard m'apprend le courage.</div>
+  <div class="container">
+    <div class="card" id="card">
+      <h1>Veux-tu être ma Valentine ? 💌</h1>
+      <p class="lead">J'ai préparé une petite surprise — déplace la souris pour voir des chats et clique "Oui" si tu aimes.</p>
+
+      <div class="actions">
+        <button class="btn yes" id="yesBtn">Oui</button>
+        <button class="btn" id="noBtn">Non</button>
       </div>
-
-  <h1>Veux‑tu être ma Valentine ? 💘</h1>
-
-  <div class="controls" id="controls">
-    <button id="yesBtn" class="btn primary">Oui 💖</button>
-    <button id="noBtn" class="btn secondary">Non</button>
+    </div>
   </div>
 
-  <div class="toast" id="toast">Oh vraiment ?</div>
-</div>
-
-<div class="note">Astuce : bouge la souris pour voir les chats réagir (après le 3ᵉ "Non").</div>
-  </div>
+  <div class="stage" id="stage" aria-hidden="true"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script>
-    /* ========== RÉGLAGES ========== */
-    const FRAME_W = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--frame-w')) || 32;
-    const FRAME_H = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--frame-h')) || 32;
+    /* ----------------------------
+       Configuration minimale
+       Modifie si besoin : CAT_SCALE, FRAMES_PER_ROW
+       ---------------------------- */
+    const CSS_CAT_SCALE = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cat-scale')) || 4;
     const FRAMES_PER_ROW = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--frames-per-row')) || 8;
-    const SHEET_ROWS = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sheet-rows')) || 8;
-    const CAT_SCALE = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cat-scale')) || 4;
+    const SHEET_SRC = 'image/cat.png'; // chemin vers la sprite
+    const GIF_SRC = 'image/love-mochi.gif'; // chemin vers le gif de célébration
 
-    // Animations (row indices start at 0)
-    const animations = {
-      idle: { row: 7, frames: 4, speed: 500, move: 0 },
-      walk: { row: 4, frames: FRAMES_PER_ROW, speed: 120, move: 1.2 },
-      run:  { row: 5, frames: FRAMES_PER_ROW, speed: 80,  move: 3.0 }
-    };
+    /* éléments UI */
+    const yesBtn = document.getElementById('yesBtn');
+    const noBtn = document.getElementById('noBtn');
+    const toastEl = document.getElementById('toast');
+    const stage = document.getElementById('stage');
+    const card = document.getElementById('card');
 
-    const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+    /* helper toast */
+    function showToast(text, ms = 1500){
+      toastEl.textContent = text;
+      toastEl.classList.add('show');
+      clearTimeout(toastEl._t);
+      toastEl._t = setTimeout(()=> toastEl.classList.remove('show'), ms);
+    }
 
+    /* ----------------------------
+       Sprite-sheet auto-détection
+       Charge l'image et calcule frameW/frameH/rows
+       ---------------------------- */
+    let SHEET_NAT_W = 0, SHEET_NAT_H = 0;
+    let FRAME_W = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--default-frame-w')) || 32;
+    let FRAME_H = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--default-frame-h')) || 32;
+    let SHEET_ROWS = 1;
+    let TOTAL_FRAMES = null; // si tu connais, mets le nombre total sinon null
+
+    function initSpriteSheet(){
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.src = SHEET_SRC + '?_=' + Date.now(); // bust cache en dev
+        img.onload = () => {
+          SHEET_NAT_W = img.naturalWidth;
+          SHEET_NAT_H = img.naturalHeight;
+
+          // si TOTAL_FRAMES connu, on calcule frameH via cols/rows ; sinon on suppose toutes les frames ont la même largeur = natWidth / FRAMES_PER_ROW
+          FRAME_W = Math.round(SHEET_NAT_W / FRAMES_PER_ROW) || FRAME_W;
+          FRAME_H = FRAME_W; // souvent sprites carrés ; sinon on essaye d'inférer via height
+          // calc rows à partir de hauteur
+          SHEET_ROWS = Math.round(SHEET_NAT_H / FRAME_H) || Math.max(1, Math.round(SHEET_NAT_H / FRAME_W));
+          // si résultat incohérent (p.ex. margins), on ajuste en recoupant
+          if (SHEET_ROWS * FRAME_H > SHEET_NAT_H){
+            // ajuste frameH pour correspondre exactement
+            FRAME_H = Math.floor(SHEET_NAT_H / SHEET_ROWS);
+          }
+
+          // fallback si quelque chose cloche
+          if (!FRAME_W || !FRAME_H){
+            FRAME_W = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--default-frame-w')) || 32;
+            FRAME_H = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--default-frame-h')) || 32;
+            SHEET_ROWS = Math.max(1, Math.round(SHEET_NAT_H / FRAME_H));
+          }
+
+          // stocker pour debug
+          console.info('sprite loaded', {SHEET_NAT_W, SHEET_NAT_H, FRAME_W, FRAME_H, FRAMES_PER_ROW, SHEET_ROWS});
+          resolve();
+        };
+        img.onerror = () => reject(new Error('Impossible de charger la sprite : ' + SHEET_SRC));
+      });
+    }
+
+    /* ----------------------------
+       Création d'un chat (élément DOM) :
+       - calcule background-size et position en pixels exacts pour éviter de voir la sheet entière
+       - gère une animation simple (frames) et mouvement de fuite horizontal
+       ---------------------------- */
+    let cats = [];
+    function createCat({x=100, y=200, animRow=0, frames=4, speed=120} = {}){
+      const el = document.createElement('div');
+      el.className = 'cat';
+      // taille en px après scale
+      const SCALE = CSS_CAT_SCALE || 4;
+      const w = FRAME_W * SCALE;
+      const h = FRAME_H * SCALE;
+      el.style.width = w + 'px';
+      el.style.height = h + 'px';
+      // background-size : taille réelle de l'image multipliée par scale pour que chaque frame corresponde
+      const bgW = SHEET_NAT_W * SCALE;
+      const bgH = SHEET_NAT_H * SCALE;
+      el.style.backgroundSize = `${bgW}px ${bgH}px`;
+      // initial frame index
+      el._frameIndex = 0;
+      el._frames = frames;
+      el._row = animRow;
+      el._speed = speed; // ms per frame
+      el._lastFrameTime = performance.now();
+      // compute initial background-position
+      const bx = -(el._frameIndex * FRAME_W * SCALE);
+      const by = -(el._row * FRAME_H * SCALE);
+      el.style.backgroundPosition = `${bx}px ${by}px`;
+
+      // position
+      el.style.transform = `translate(${x}px, ${y}px) scale(${SCALE}) translateZ(0)`;
+      // store logical pos (in px unscaled)
+      el._x = x;
+      el._y = y;
+
+      // animation loop
+      function tick(now){
+        // frame animation
+        if (now - el._lastFrameTime >= el._speed){
+          el._frameIndex = (el._frameIndex + 1) % el._frames;
+          el._lastFrameTime = now;
+          const bx = -(el._frameIndex * FRAME_W * SCALE);
+          const by = -(el._row * FRAME_H * SCALE);
+          el.style.backgroundPosition = `${bx}px ${by}px`;
+        }
+        // movement: simple random small wobble (cats fuient via updateFlee)
+        if (el._raf) el._raf = requestAnimationFrame(tick);
+      }
+      el._raf = requestAnimationFrame(tick);
+
+      // append
+      stage.appendChild(el);
+      el.destroy = () => { cancelAnimationFrame(el._raf); el.remove(); };
+      cats.push(el);
+      return el;
+    }
+
+    /* commande pour faire fuir les chats de la souris : on applique un petit déplacement */
     let mouseX = window.innerWidth / 2;
-
-    // Update global mouseX (only horizontal)
     window.addEventListener('mousemove', (e) => {
       mouseX = e.clientX;
+      // on convertit chaque chat pour qu'il se déplace horizontalement si la souris est proche
+      cats.forEach(c => {
+        const rect = c.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const dist = Math.abs(cx - mouseX);
+        if (dist < 140){
+          // flee: déplacer vers la gauche ou droite selon position souris par rapport au chat
+          const dir = cx > mouseX ? 1 : -1;
+          // translation logique (en px)
+          const delta = dir * Math.max(6, Math.round((140 - dist) / 8));
+          c._x += delta;
+          // clamp
+          c._x = Math.max(0, Math.min(window.innerWidth - rect.width, c._x));
+          c.style.transform = `translate(${c._x}px, ${c._y}px) scale(${CSS_CAT_SCALE})`;
+        } else {
+          // petit retour lent vers baseline
+          // noop for simplicity
+        }
+      });
     });
 
-    function createCat(opts = {}) {
-      const cat = document.createElement('div');
-      cat.className = 'cat';
-      const x = (opts.x != null) ? opts.x : 80;
-      const y = (opts.y != null) ? opts.y : (window.innerHeight - 140);
-      cat.style.left = x + 'px';
-      cat.style.top  = y + 'px';
-      cat._anim = animations[opts.anim || 'idle'];
-      cat._frameIndex = 0;
-      cat._lastFrameTime = performance.now();
-      cat._dir = Math.random() > 0.5 ? 1 : -1;
-      cat._posX = x;
-      cat._posY = y;
-
-      // Set background-size immediately so the full sheet is scaled and we only show one frame
-      const sheetWidth  = FRAMES_PER_ROW * FRAME_W * CAT_SCALE;
-      const sheetHeight = SHEET_ROWS * FRAME_H * CAT_SCALE;
-      cat.style.backgroundSize = sheetWidth + 'px ' + sheetHeight + 'px';
-
-      // initial background-position (one frame)
-      const px0 = -cat._frameIndex * FRAME_W * CAT_SCALE;
-      const py0 = -cat._anim.row * FRAME_H * CAT_SCALE;
-      cat.style.backgroundPosition = px0 + 'px ' + py0 + 'px';
-
-      // initial flip
-      cat.style.transform = `scaleX(${cat._dir})`;
-
-      document.body.appendChild(cat);
-
-      function updateFrame(now){
-        const a = cat._anim;
-        if (!a) return;
-        if (now - cat._lastFrameTime > a.speed) {
-          cat._frameIndex = (cat._frameIndex + 1) % a.frames;
-          cat._lastFrameTime = now;
-          const px = -cat._frameIndex * FRAME_W * CAT_SCALE;
-          const py = -a.row * FRAME_H * CAT_SCALE;
-          cat.style.backgroundPosition = px + 'px ' + py + 'px';
-        }
+    /* spawn initial */
+    function spawnSomeCats(n=4){
+      const baseY = Math.max(120, window.innerHeight - (FRAME_H * CSS_CAT_SCALE) - 140);
+      for (let i=0;i<n;i++){
+        const x = 40 + Math.floor(Math.random() * Math.max(120, window.innerWidth - 200));
+        const y = baseY - Math.floor(Math.random() * 14);
+        const row = Math.random() > 0.5 ? 1 : 0; // two example rows
+        createCat({x,y,animRow:row,frames:4,speed:160 + Math.round(Math.random()*60)});
       }
-
-      function tick(now){
-        // Reaction to mouse: cats move horizontally away from mouseX
-        const dx = (cat._posX + (FRAME_W*CAT_SCALE)/2) - mouseX; // positive if cat is right of mouse
-        const dist = Math.abs(dx);
-        // determine behaviour: if close, run; if mid, walk; else idle
-        if (dist < 120) cat._anim = animations.run;
-        else if (dist < 320) cat._anim = animations.walk;
-        else cat._anim = animations.idle;
-
-        // Direction: move away horizontally only
-        if (dist > 40) {
-          const dirAway = dx > 0 ? 1 : -1; // if cat is right of mouse, dirAway=1 (move right)
-          // speed scales with animation move and closeness
-          const speedFactor = clamp((180 - dist) / 180, 0.1, 1.0); // closer => faster (for run)
-          const baseMove = cat._anim.move;
-          const delta = baseMove * (1 + (1 - speedFactor)) * (dirAway); // move away
-          cat._posX += delta;
-          // keep within bounds horizontally
-          const minX = 6;
-          const maxX = window.innerWidth - FRAME_W * CAT_SCALE - 6;
-          if (cat._posX < minX) cat._posX = minX;
-          if (cat._posX > maxX) cat._posX = maxX;
-          // set flip according to movement direction (face away from mouse)
-          const facing = dirAway > 0 ? 1 : -1;
-          cat.style.transform = `scaleX(${facing})`;
-        }
-
-        cat.style.left = Math.round(cat._posX) + 'px';
-        // keep vertical fixed (no up/down)
-        cat.style.top = Math.round(cat._posY) + 'px';
-
-        updateFrame(now);
-        cat._raf = requestAnimationFrame(tick);
-      }
-      cat._raf = requestAnimationFrame(tick);
-
-      cat.destroy = () => {
-        cancelAnimationFrame(cat._raf);
-        if (cat.parentNode) cat.parentNode.removeChild(cat);
-      };
-      return cat;
     }
 
-    /* ================= LOGIQUE UI ================= */
-    const yesBtn = document.getElementById('yesBtn');
-    const noBtn  = document.getElementById('noBtn');
-    const toast  = document.getElementById('toast');
-    let noClicks = 0;
-    let noEscaped = false;
-    const createdCats = [];
+    /* nettoyage on unload */
+    window.addEventListener('beforeunload', ()=> cats.forEach(c => c.destroy && c.destroy()));
 
-    function showToast(msg, t = 1400){
-      toast.textContent = msg;
-      toast.classList.add('show');
-      clearTimeout(toast._timeout);
-      toast._timeout = setTimeout(()=> toast.classList.remove('show'), t);
-    }
-
-    // Bouton "Non" : fuite smooth et rapide
-    noBtn.addEventListener('click', () => {
-      if (noEscaped) return;
-      noClicks++;
-      const msgs = ["Tu es sûre ?", "Vraiment ?", "Oh... d'accord, attends..."];
-      showToast(msgs[Math.min(msgs.length-1, noClicks-1)]);
-      const scale = Math.max(0.45, 1 - noClicks * 0.22);
-      noBtn.style.transform = `scale(${scale})`;
-      noBtn.style.transition = 'transform 200ms cubic-bezier(.2,.9,.3,1)';
-
-      if (noClicks >= 3) {
-        noEscaped = true;
-
-        const rect = noBtn.getBoundingClientRect();
-        const startX = rect.left;
-        const endX = window.innerWidth + 200;
-        const duration = 420;
-        const easing = t => 1 - Math.pow(1 - t, 3);
-        const start = performance.now();
-
-        noBtn.style.position = 'fixed';
-        noBtn.style.top = rect.top + 'px';
-        noBtn.style.left = startX + 'px';
-        noBtn.style.zIndex = 9999;
-        noBtn.style.pointerEvents = 'none';
-
-        function animate(now){
-          const p = clamp((now - start) / duration, 0, 1);
-          const e = easing(p);
-          const cur = startX + (endX - startX) * e;
-          noBtn.style.left = cur + 'px';
-          noBtn.style.transform = `translateZ(0) rotate(${e * 18}deg) scale(0.85)`;
-          if (p < 1) requestAnimationFrame(animate);
-          else spawnCatsAfterEscape();
-        }
-        requestAnimationFrame(animate);
-      }
-    });
-
+    /* ----------------------------
+       Handler du bouton "Oui" : affiche GIF de célébration au-dessus du card
+       ---------------------------- */
     yesBtn.addEventListener('click', () => {
       showToast("Oui ! 💞", 1200);
       yesBtn.disabled = true;
-      yesBtn.style.opacity = 0.85;
+
+      // créer img
+      const gif = document.createElement('img');
+      gif.src = GIF_SRC;
+      gif.alt = 'Celebrate';
+      gif.className = 'celebration-gif';
+      // initial append to body (pour éviter overflow du card)
+      document.body.appendChild(gif);
+
+      // positionner centré horizontalement par rapport à la card, et juste au-dessus
+      const rect = card.getBoundingClientRect();
+      // attendre que l'image ait un layout pour mesurer sa hauteur
+      requestAnimationFrame(() => {
+        const grect = gif.getBoundingClientRect();
+        const top = Math.max(8, rect.top + window.scrollY - grect.height - 8);
+        const left = rect.left + rect.width / 2 + window.scrollX;
+        gif.style.left = left + 'px';
+        gif.style.top = top + 'px';
+        // show class pour fadeIn
+        requestAnimationFrame(()=> gif.classList.add('show'));
+      });
+
+      // durée puis suppression
+      const DURATION = 2200;
+      setTimeout(() => {
+        gif.classList.remove('show');
+        setTimeout(()=> gif.remove(), 300);
+      }, DURATION);
     });
 
-    function spawnCatsAfterEscape(){
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      const baseY = Math.max(120, h - (FRAME_H * CAT_SCALE) - 40);
-      const N = 5;
-      for (let i=0;i<N;i++){
-        const x = Math.floor(40 + Math.random() * (Math.max(200, w - 160)));
-        const y = baseY - Math.floor(Math.random() * 20);
-        const anim = Math.random() > 0.5 ? 'walk' : 'idle';
-        const cat = createCat({ x, y, anim });
-        // randomize initial frame so they don't animate in sync
-        cat._frameIndex = Math.floor(Math.random() * (cat._anim.frames || 4));
-        createdCats.push(cat);
+    noBtn.addEventListener('click', () => {
+      showToast("Oh... 😿", 900);
+      noBtn.disabled = true;
+    });
+
+    /* ----------------------------
+       Init sequence
+       ---------------------------- */
+    (async function init(){
+      try {
+        await initSpriteSheet();
+      } catch(e){
+        console.warn(e);
+        showToast("Erreur: impossible de charger la sprite (voir console).", 2200);
+      } finally {
+        // spawn quelques chats après init (même si sprite detection a fallback)
+        spawnSomeCats(5);
       }
-      showToast("Ils sont là... 🐾", 1400);
-    }
+    })();
 
-    // Clean up
-    window.addEventListener('beforeunload', () => {
-      createdCats.forEach(c => c.destroy && c.destroy());
-    });
-
-    // debug helper (décommenter pour forcer l'apparition)
-    // spawnCatsAfterEscape();
-
-    // On resize, clamp mice and cat positions
-    window.addEventListener('resize', () => {
-      mouseX = clamp(mouseX, 0, window.innerWidth);
-    });
+    /* debug helper : en cas de soucis, check console pour les valeurs de la sprite */
   </script>
 </body>
 </html>
