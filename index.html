@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Sprite Grid Test</title>
+<title>Chat animé 🐱</title>
 
 <style>
 body {
@@ -14,28 +14,33 @@ body {
   align-items: center;
 }
 
+/* 🐱 CHAT */
 .cat {
-  width: 32px;   /* taille d’UNE case */
+  width: 32px;   /* taille d'UNE frame */
   height: 32px;
-
-  image-rendering: pixelated;
 
   background-image: url("image/cat.png");
   background-repeat: no-repeat;
+
+  image-rendering: pixelated;
+
+  /* 🔍 AGRANDISSEMENT */
+  transform: scale(4);
+  transform-origin: center;
 }
 </style>
 </head>
 
 <body>
-  <div class="cat" id="cat"></div>
+
+<div class="cat" id="cat"></div>
 
 <script>
-/* ⚙️ PARAMÈTRES À AJUSTER */
+/* ✅ PARAMÈTRES */
 const frameWidth = 32;
 const frameHeight = 32;
 
-/* ✅ FRAMES À JOUER (col, row) */
-/* Tu choisis les poses que tu veux */
+/* ✅ FRAMES DE L'ANIMATION (colonne, ligne) */
 const frames = [
   [0, 4],
   [1, 4],
@@ -45,7 +50,7 @@ const frames = [
   [5, 4]
 ];
 
-/* 🔁 PING-PONG */
+/* 🔁 PING‑PONG */
 let index = 0;
 let direction = 1;
 
@@ -62,7 +67,7 @@ setInterval(() => {
   if (index === frames.length - 1 || index === 0) {
     direction *= -1;
   }
-}, 120); // vitesse animation
+}, 120); // vitesse (plus petit = plus rapide)
 </script>
 
 </body>
