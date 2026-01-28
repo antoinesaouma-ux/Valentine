@@ -11,8 +11,8 @@
       --text: #ecebf6;
       --muted: #9b9bb3;
       --accent: #ff6fa3;
-      --cat-scale: 2;
-      --frames-per-row: 8;
+      --cat-scale: 2; /* ajuste ici la taille des chats (1 = natif, 2 = 2x, etc.) */
+      --gif-width: 160px;
     }
 
     *{box-sizing:border-box}
@@ -34,12 +34,13 @@
       box-shadow: 0 8px 30px rgba(3,6,23,0.6);
       position:relative;
       overflow:visible;
-      text-align:center; /* centre le texte */
+      text-align:center;
     }
     h1{margin:0 0 12px 0;font-size:22px}
     p.lead{margin:0 0 18px;color:var(--muted)}
+    .response { margin-top:14px; color:var(--text); }
 
-    .actions{display:flex;gap:12px;align-items:center;margin-top:18px;justify-content:center;} /* centre les boutons */
+    .actions{display:flex;gap:12px;align-items:center;margin-top:18px;justify-content:center;}
     button.btn{
       background:transparent;
       color:var(--text);
@@ -48,311 +49,285 @@
       min-width:88px;
       transition: transform 160ms ease, opacity 160ms ease;
     }
-    button.btn.yes{background:linear-gradient(90deg,var(--accent),#ff8fb3);color:#0b0720;border:none}
-    button.btn:disabled{opacity:0.6;cursor:default}
+    button.btn.yes{background:linear-gradient(90deg,#ff7aac,#ff4f9a);border:none;color:white}
+    button.btn.no{background:transparent}
 
-    /* petits vers amoureux */
-    .vers{
-      margin-top:14px;
-      font-style:italic;
-      color:#ffd7e6;
-      opacity:0.95;
-    }
-
-    /* toast simple */
-    .toast{
-      position:fixed;
-      left:50%;
-      transform:translateX(-50%);
-      bottom:28px;
-      background:rgba(0,0,0,0.45);
-      color:var(--text);
-      padding:10px 16px;border-radius:10px;font-weight:600;backdrop-filter: blur(4px);
-      opacity:0;transition:opacity 220ms ease;pointer-events:none;z-index:1100;
-    }
-    .toast.show{opacity:1;pointer-events:auto}
-
-    /* GIF de célébration (apparaît au-dessus du card) */
+    /* GIF wrapper - positioned relative to card and centered */
     .gif-wrap{
       position:absolute;
       left:50%;
       transform:translateX(-50%);
-      pointer-events:auto;
-      z-index:99999;
-      top: -8px; /* sera recalculé si nécessaire */
+      top:18px; /* au-dessus du message principal */
+      pointer-events:none;
+      z-index:60;
       display:flex;
-      align-items:flex-start;
+      flex-direction:column;
+      align-items:center;
       gap:8px;
-      pointer-events: none; /* l'image seule gère le click */
     }
     .celebration-gif{
-      width:180px;
-      max-width:48vw;
+      width:var(--gif-width);
+      max-width:44vw;
+      border-radius:12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
       opacity:0;
-      transition: opacity 260ms ease, transform 260ms ease;
-      transform:translateY(-8px);
-      filter: drop-shadow(0 10px 28px rgba(0,0,0,0.45));
+      transform:translateY(-8px) scale(0.98);
+      transition:opacity 220ms ease, transform 220ms ease;
       pointer-events:auto;
-      border-radius:10px;
-      display:block;
+      cursor:pointer;
     }
-    .celebration-gif.show{opacity:1;transform:translateY(0)}
+    .celebration-gif.show{
+      opacity:1;
+      transform:translateY(0) scale(1);
+    }
     .gif-close{
       background:rgba(0,0,0,0.45);
-      color:var(--text);
-      border-radius:8px;
+      color:white;
+      border:none;
       padding:6px 8px;
+      border-radius:8px;
       font-weight:700;
       cursor:pointer;
       pointer-events:auto;
-      align-self:flex-start;
-      margin-top:6px;
     }
 
-    /* stage plein écran pour les chats */
-    .stage{
-      position:fixed;
-      inset:0;
+    /* message temporaire ajouté quand GIF visible */
+    .celebration-msg{
+      margin-top:8px;
+      color:#fff;
+      font-weight:700;
+      background:linear-gradient(90deg,#ff9bbb,#ff6fa3);
+      padding:8px 12px;
+      border-radius:10px;
+      box-shadow:0 6px 20px rgba(255,111,150,0.12);
       pointer-events:none;
-      z-index:50;
-      overflow:visible;
+      transform-origin:center;
+      opacity:0;
+      transform:translateY(-6px) scale(0.99);
+      transition:opacity 220ms ease, transform 220ms ease;
     }
-    .cat{
-      position:absolute;
-      width:32px;
-      height:32px;
-      background-image:url("image/cat.png");
-      background-repeat:no-repeat;
-      image-rendering: pixelated;
-      will-change: transform, background-position;
-      transform-origin: left top;
-      pointer-events:none;
-    }
+    .celebration-msg.show{ opacity:1; transform:translateY(0) scale(1); }
+
+    /* petits chats (canvas) container (z-index bas) */
+    .cats-layer{ position:absolute; inset:0; pointer-events:none; z-index:10; overflow:visible; }
 
     @media (max-width:420px){
-      .celebration-gif{width:140px}
-      .gif-close{padding:5px 7px}
+      :root { --gif-width: 140px; }
+      .card{ padding:20px; }
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="card" id="card">
-      <h1>Veux-tu être ma Valentine ? 💌</h1>
-      <p class="lead">J'ai préparé une petite surprise — déplace la souris pour voir les chats. Choisis bien ❤️</p>
+      <h1>Tu veux un petit secret ?</h1>
+      <p class="lead">Clique oui si tu es prêt·e 💌</p>
 
       <div class="actions">
         <button class="btn yes" id="yesBtn">Oui</button>
         <button class="btn no" id="noBtn">Non</button>
       </div>
 
-      <div class="vers" id="vers">
-        « Que vos modestes soupirs en soient les témoins, 
-        et que mes vers, timides, rapprochent nos mains. »
-      </div>
+      <p class="response" id="response">Je suis là pour toi. Dis‑moi si tu veux que je t'aide.</p>
 
-      <!-- zone où on positionne le GIF (absolue par rapport à la card) -->
-      <div id="gifArea"></div>
+      <!-- zone pour le GIF et le message de célébration -->
+      <!-- insérée dynamiquement dans JS -->
+
+      <!-- calque pour les chats (script placera des canvases / images ici) -->
+      <div class="cats-layer" id="catsLayer"></div>
     </div>
   </div>
 
-  <div class="stage" id="stage" aria-hidden="true"></div>
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
   <script>
-    /* Configuration */
-    const SHEET_SRC = 'image/cat.png';
-    const GIF_SRC = 'image/love-mochi.gif';
-    const CSS_CAT_SCALE = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cat-scale')) || 4;
-    const FRAMES_PER_ROW = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--frames-per-row')) || 8;
-
-    /* UI */
-    const yesBtn = document.getElementById('yesBtn');
-    const noBtn  = document.getElementById('noBtn');
-    const toastEl = document.getElementById('toast');
-    const stage = document.getElementById('stage');
+    /* ============================
+       Configuration & utilitaires
+       ============================ */
     const card = document.getElementById('card');
-    const gifArea = document.getElementById('gifArea');
-    const versEl = document.getElementById('vers');
+    const yesBtn = document.getElementById('yesBtn');
+    const noBtn = document.getElementById('noBtn');
+    const responseP = document.getElementById('response');
+    const catsLayer = document.getElementById('catsLayer');
 
-    function showToast(text, ms = 1500){
-      toastEl.textContent = text;
-      toastEl.classList.add('show');
-      clearTimeout(toastEl._t);
-      toastEl._t = setTimeout(()=> toastEl.classList.remove('show'), ms);
-    }
+    const GIF_SRC = 'image/love-mochi.gif';
+    const CAT_SRC = 'image/cat.png'; // sprite-sheet (si tu utilises une sprite)
+    const CSS_CAT_SCALE = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--cat-scale')) || 2;
 
-    /* Sprite auto-detect */
-    let SHEET_NAT_W=0, SHEET_NAT_H=0, FRAME_W=32, FRAME_H=32, SHEET_ROWS=1;
-    function initSprite(){
-      return new Promise((resolve,reject)=>{
-        const img=new Image();
-        img.src = SHEET_SRC + '?_=' + Date.now();
-        img.onload = () => {
-          SHEET_NAT_W = img.naturalWidth;
-          SHEET_NAT_H = img.naturalHeight;
-          FRAME_W = Math.round(SHEET_NAT_W / FRAMES_PER_ROW) || 32;
-          FRAME_H = FRAME_W;
-          SHEET_ROWS = Math.max(1, Math.round(SHEET_NAT_H / FRAME_H));
-          console.info('sprite loaded', {SHEET_NAT_W,SHEET_NAT_H,FRAME_W,FRAME_H,FRAMES_PER_ROW,SHEET_ROWS});
-          resolve();
-        };
-        img.onerror = ()=> reject(new Error('Impossible de charger ' + SHEET_SRC));
-      });
-    }
-
-    /* Création et animation des chats */
-    let cats = [];
-    function createCat({x=100,y=200,frames=4,row=0,speed=140} = {}){
-      const el = document.createElement('div');
-      el.className = 'cat';
-      const SCALE = CSS_CAT_SCALE;
-      const w = FRAME_W * SCALE;
-      const h = FRAME_H * SCALE;
-      el.style.width = w + 'px';
-      el.style.height = h + 'px';
-      el.style.backgroundSize = `${SHEET_NAT_W * SCALE}px ${SHEET_NAT_H * SCALE}px`;
-      el._frameIndex = 0;
-      el._frames = frames;
-      el._row = row;
-      el._speed = speed;
-      el._last = performance.now();
-      el._x = x; el._y = y;
-      el.style.transform = `translate(${x}px, ${y}px) scale(${SCALE})`;
-      const tick = (now) => {
-        if (now - el._last >= el._speed){
-          el._frameIndex = (el._frameIndex + 1) % el._frames;
-          el._last = now;
-          const bx = -(el._frameIndex * FRAME_W * SCALE);
-          const by = -(el._row * FRAME_H * SCALE);
-          el.style.backgroundPosition = `${bx}px ${by}px`;
-        }
-        el._raf = requestAnimationFrame(tick);
-      };
-      el._raf = requestAnimationFrame(tick);
-      stage.appendChild(el);
-      el.destroy = ()=>{ cancelAnimationFrame(el._raf); el.remove(); };
-      cats.push(el);
-      return el;
-    }
-
-    /* Fuite à la souris */
-    let mouseX = window.innerWidth/2;
-    window.addEventListener('mousemove', (e)=>{
-      mouseX = e.clientX;
-      cats.forEach(c=>{
-        const rect = c.getBoundingClientRect();
-        const cx = rect.left + rect.width/2;
-        const dist = Math.abs(cx - mouseX);
-        if (dist < 140){
-          const dir = cx > mouseX ? 1 : -1;
-          const delta = dir * Math.max(6, Math.round((140 - dist) / 8));
-          c._x += delta;
-          c._x = Math.max(0, Math.min(window.innerWidth - rect.width, c._x));
-          c.style.transform = `translate(${c._x}px, ${c._y}px) scale(${CSS_CAT_SCALE})`;
-        }
-      });
-    });
-
-    /* spawn once utility */
-    let spawned = false;
-    function spawnCatsOnce(n=6){
-      if (spawned) return;
-      spawned = true;
-      const baseY = Math.max(120, window.innerHeight - (FRAME_H * CSS_CAT_SCALE) - 140);
-      for (let i=0;i<n;i++){
-        const x = 30 + Math.floor(Math.random() * Math.max(120, window.innerWidth - 200));
-        const y = baseY - Math.floor(Math.random() * 28);
-        const row = Math.floor(Math.random()*SHEET_ROWS);
-        createCat({x,y,frames:4,row,speed:120 + Math.round(Math.random()*90)});
-      }
-    }
-
-    /* comportement du bouton NON avec 3 clicks */
+    // compte pour les clics "Non"
     let noClicks = 0;
-    const noMessages = [
-      "Je pense que tu as dû te tromper… réessaie ❤️",
-      "Non, non — c'est pas très gentil ! Essaie encore 😉",
-      "Hé ! Tu m'as forcé·e… voilà des chats ! 🐱" // 3ème -> spawn
-    ];
-    noBtn.addEventListener('click', (e)=>{
+    let catsSpawned = false;
+    let activeGifWrap = null;
+    let celebrationMsgEl = null;
+
+    /* simple toast interne (petit message temporaire en bas) */
+    function showToast(text, ms=1200){
+      const t = document.createElement('div');
+      t.textContent = text;
+      Object.assign(t.style, {
+        position: 'fixed', left:'50%', transform:'translateX(-50%)',
+        bottom:'28px', background:'rgba(0,0,0,0.5)', color:'#fff',
+        padding:'8px 12px', borderRadius:'10px', zIndex:120, fontWeight:700
+      });
+      document.body.appendChild(t);
+      setTimeout(()=> { t.style.opacity = '0'; t.addEventListener('transitionend', ()=> t.remove()); }, ms);
+    }
+
+    /* ============================
+       Comportement bouton NON (3 clics)
+       ============================ */
+    noBtn.addEventListener('click', () => {
       noClicks++;
-      if (noClicks <= 2){
-        // messages taquins et rétrécissement progressif
-        showToast(noMessages[noClicks-1], 1200);
-        const shrink = 1 - 0.12*noClicks;
-        noBtn.style.transform = `scale(${shrink})`;
+      if (noClicks === 1){
+        responseP.textContent = "Je pense que tu as dû te tromper… réessaie 😉";
+        noBtn.style.transform = 'scale(0.92)';
+        showToast("Essaie encore", 900);
+      } else if (noClicks === 2){
+        responseP.textContent = "Non vraiment, j'insiste — essaie encore 😼";
+        noBtn.style.transform = 'scale(0.78)';
+        showToast("Tu peux le faire", 900);
       } else {
-        // 3ème click: spawn cats, disparition du bouton NO
-        showToast(noMessages[2], 1400);
-        noBtn.style.transform = `scale(0.5)`;
-        noBtn.style.opacity = '0';
-        noBtn.style.pointerEvents = 'none';
-        setTimeout(()=> noBtn.remove(), 400);
-        spawnCatsOnce(6);
+        responseP.textContent = "Bon… d'accord, je me tais. Regarde plutôt ça !";
+        // faire "fuir" le bouton (animation) puis supprimer
+        noBtn.style.transition = 'transform 220ms ease, left 220ms ease, top 220ms ease';
+        noBtn.style.transform = 'translateX(160px) translateY(-6px) scale(0.5)';
+        setTimeout(()=> noBtn.remove(), 260);
+        // spawn des chats une fois seulement
+        if (!catsSpawned) {
+          spawnSomeCats(8);
+          catsSpawned = true;
+        }
       }
     });
 
-    /* Oui : affiche GIF au dessus du card et le laisse visible jusqu'à fermeture
-       le gif peut être fermé manuellement (croix) ou disparaît après 6s (optionnel) */
-    yesBtn.addEventListener('click', ()=>{
-      showToast("Oui ! 💞", 1200);
-      yesBtn.disabled = true;
+    /* ============================
+       Comportement bouton OUI + GIF
+       ============================ */
+    yesBtn.addEventListener('click', () => {
+      // si un GIF est déjà présent, ne rien faire
+      if (activeGifWrap) return;
 
-      // wrapper absolu relatif à la card
+      // masquer le message en-dessous
+      responseP.style.visibility = 'hidden';
+
+      // créer wrapper gif
       const wrap = document.createElement('div');
       wrap.className = 'gif-wrap';
+      wrap.style.pointerEvents = 'none'; // on autorisera les enfants à recevoir les events
       // image
       const img = document.createElement('img');
       img.src = GIF_SRC;
       img.alt = 'Celebrate';
       img.className = 'celebration-gif';
-      // close btn
+      // close button
       const close = document.createElement('button');
       close.className = 'gif-close';
       close.textContent = 'X';
-      // enable pointer events in wrap
-      wrap.style.pointerEvents = 'auto';
 
+      // message de célébration
+      const cm = document.createElement('div');
+      cm.className = 'celebration-msg';
+      cm.textContent = 'Je le savais ! Je n\'ai jamais douté de toi';
+
+      // ordre : gif + close (overlay) + message (sous le gif)
       wrap.appendChild(img);
       wrap.appendChild(close);
-      // append to card so it's positioned above it
-      card.appendChild(wrap);
+      wrap.appendChild(cm);
 
-      // ensure layout then position (center)
+      // pointer events pour les enfants
+      wrap.style.pointerEvents = 'auto';
+
+      // insérer dans la card
+      card.appendChild(wrap);
+      activeGifWrap = wrap;
+      celebrationMsgEl = cm;
+
+      // petit délai pour transition show
       requestAnimationFrame(()=>{
-        // reposition if needed (already centered via CSS translateX(-50%))
         img.classList.add('show');
+        cm.classList.add('show');
       });
 
-      // close handlers
-      function removeGif(){
+      // handlers pour fermer / restaurer le message
+      function removeCelebration(){
+        if (!activeGifWrap) return;
         img.classList.remove('show');
-        setTimeout(()=> { wrap.remove(); yesBtn.disabled = false; }, 260);
+        cm.classList.remove('show');
+        setTimeout(()=>{
+          // restore original message
+          responseP.style.visibility = 'visible';
+          // cleanup
+          wrap.remove();
+          activeGifWrap = null;
+          celebrationMsgEl = null;
+        }, 260);
       }
-      close.addEventListener('click', removeGif);
-      img.addEventListener('click', removeGif);
 
-      // auto remove after 6s (si tu préfères pas, augmente/désactive)
-      wrap._timer = setTimeout(removeGif, 6000);
+      close.addEventListener('click', removeCelebration);
+      img.addEventListener('click', removeCelebration);
+
+      // auto-dismiss après 6000ms
+      wrap._timer = setTimeout(removeCelebration, 6000);
     });
 
-    /* init */
-    (async function init(){
-      try {
-        await initSprite();
-      } catch(e){
-        console.warn(e);
-        showToast("Erreur: impossible de charger la sprite (voir console).", 2200);
-      } finally {
-        // on ne spawn plus automatiquement: les chats apparaissent au 3ème "Non"
-      }
-    })();
+    /* ============================
+       Chats : spawn simple (images) et fuite souris
+       ============================ */
+    function spawnSomeCats(n=6){
+      // simple création d'images "chat" qui se déplacent aléatoirement et fuient la souris
+      for (let i=0;i<n;i++){
+        const img = document.createElement('img');
+        img.src = CAT_SRC;
+        img.alt = 'chat';
+        img.style.position = 'absolute';
+        img.style.width = Math.round(24 * CSS_CAT_SCALE) + 'px'; // taille basée sur la variable
+        img.style.height = 'auto';
+        img.style.left = (10 + Math.random() * 80) + '%';
+        img.style.top = (40 + Math.random() * 50) + '%';
+        img.style.transform = 'translate(-50%,-50%)';
+        img.style.transition = 'transform 420ms ease, left 400ms ease, top 400ms ease';
+        img.style.zIndex = 20;
+        img.style.pointerEvents = 'none';
+        catsLayer.appendChild(img);
 
-    /* nettoyage */
+        // comportement : au survol de la souris sur la window, fuir
+        function flee(e){
+          // calc distance
+          const rect = img.getBoundingClientRect();
+          const cx = rect.left + rect.width/2;
+          const cy = rect.top + rect.height/2;
+          const dx = cx - e.clientX;
+          const dy = cy - e.clientY;
+          const dist = Math.sqrt(dx*dx + dy*dy);
+          // si souris trop proche, sauter loin
+          if (dist < 160){
+            const signX = Math.sign(dx) || (Math.random() < 0.5 ? -1 : 1);
+            const signY = Math.sign(dy) || (Math.random() < 0.5 ? -1 : 1);
+            const newLeft = Math.min(98, Math.max(2, (parseFloat(img.style.left) + signX * (8 + Math.random()*18))));
+            const newTop  = Math.min(96, Math.max(28, (parseFloat(img.style.top) + signY * (6 + Math.random()*12))));
+            img.style.left = newLeft + '%';
+            img.style.top = newTop + '%';
+          }
+        }
+
+        // attache l'évènement global (léger)
+        window.addEventListener('mousemove', flee);
+
+        // stockage cleanup sur l'élément
+        img._cleanup = () => window.removeEventListener('mousemove', flee);
+      }
+    }
+
+    /* cleanup quand on quitte (bonne pratique) */
     window.addEventListener('beforeunload', ()=>{
-      cats.forEach(c=> c.destroy && c.destroy());
+      // supprimer listeners attachés par spawnSomeCats
+      const imgs = catsLayer.querySelectorAll('img');
+      imgs.forEach(im => {
+        if (im._cleanup) im._cleanup();
+      });
     });
+
+    /* ============================
+       Fin
+       ============================ */
   </script>
 </body>
 </html>
