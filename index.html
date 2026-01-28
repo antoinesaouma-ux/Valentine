@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Question importante 💘</title>
+<title>Pour toi 💘</title>
 
 <style>
   :root {
@@ -31,44 +31,58 @@
 
   .card {
     background: var(--card);
-    backdrop-filter: blur(20px);
-    padding: 50px 60px;
-    border-radius: 24px;
+    backdrop-filter: blur(24px);
+    padding: 48px 56px;
+    border-radius: 28px;
     text-align: center;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.45);
+    max-width: 520px;
+  }
+
+  .intro {
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--muted);
+    margin-bottom: 28px;
   }
 
   h1 {
-    font-size: 32px;
-    margin-bottom: 10px;
+    font-size: 30px;
+    margin-bottom: 20px;
   }
 
   #message {
     height: 24px;
-    margin: 20px 0 30px;
+    margin-bottom: 28px;
+    font-size: 15px;
     color: var(--muted);
-    font-size: 16px;
     transition: opacity 0.3s ease;
   }
 
   .buttons {
     position: relative;
-    height: 80px;
+    height: 90px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
   }
 
   button {
     border: none;
-    padding: 14px 36px;
+    padding: 14px 38px;
     font-size: 18px;
     border-radius: 999px;
     cursor: pointer;
+    white-space: nowrap;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
 
   #oui {
     background: linear-gradient(135deg, #ff4d8d, #ff85b2);
     color: white;
-    box-shadow: 0 10px 30px rgba(255,77,141,0.4);
+    box-shadow: 0 12px 36px rgba(255,77,141,0.4);
+    z-index: 2;
   }
 
   #oui:hover {
@@ -76,13 +90,12 @@
   }
 
   #non {
-    position: absolute;
-    left: 55%;
-    top: 0;
     background: transparent;
     color: var(--muted);
-    border: 1px solid rgba(255,255,255,0.3);
+    border: 1px solid rgba(255,255,255,0.35);
     backdrop-filter: blur(10px);
+    position: absolute;
+    right: 0;
   }
 </style>
 </head>
@@ -90,10 +103,16 @@
 <body>
 
 <div class="card">
-  <h1>Veux‑tu être ma Valentine ?</h1>
+  <div class="intro">
+    Depuis que je t’ai rencontrée,<br>
+    chaque jour a un peu plus de sens.
+  </div>
+
+  <h1>Veux‑tu être ma Valentine ? 💘</h1>
+
   <div id="message"></div>
 
-  <div class="buttons">
+  <div class="buttons" id="zone">
     <button id="oui" onclick="oui()">Oui 💖</button>
     <button id="non" onclick="nonClique()">Non</button>
   </div>
@@ -108,6 +127,7 @@
   const nonBtn = document.getElementById("non");
   const ouiBtn = document.getElementById("oui");
   const message = document.getElementById("message");
+  const zone = document.getElementById("zone");
 
   function oui() {
     alert("💖 J’étais sûr de toi 💖");
@@ -121,7 +141,7 @@
     }
 
     if (nonCount === 2) {
-      message.innerText = "Réfléchis encore un peu 😏";
+      message.innerText = "Prends encore une seconde 😌";
       nonBtn.style.transform = "scale(0.85)";
     }
 
@@ -141,8 +161,13 @@
     if (moveInterval) return;
 
     moveInterval = setInterval(() => {
-      const x = Math.random() * (window.innerWidth - nonBtn.offsetWidth);
-      const y = Math.random() * (window.innerHeight - nonBtn.offsetHeight);
+      const zoneRect = zone.getBoundingClientRect();
+
+      const maxX = zoneRect.width - nonBtn.offsetWidth;
+      const maxY = zoneRect.height - nonBtn.offsetHeight;
+
+      const x = Math.random() * maxX;
+      const y = Math.random() * maxY;
 
       nonBtn.style.transition = "left 0.8s ease, top 0.8s ease";
       nonBtn.style.left = x + "px";
