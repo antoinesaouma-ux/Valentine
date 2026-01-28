@@ -1,84 +1,98 @@
-<script>
-  let nonCount = 0;
-  let fuiteActive = false;
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Question très importante 💘</title>
 
-  const nonBtn = document.getElementById("non");
-  const message = document.getElementById("message");
-
-  function oui() {
-    alert("💖 J’étais sûr de toi 💖");
-  }
-
-  function nonClique() {
-    nonCount++;
-
-    if (nonCount === 1) {
-      message.innerText = "🤔 Je pense que tu t’es trompée… réessaie 😉";
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #ffe6f0;
+      text-align: center;
+      padding-top: 100px;
+      overflow: hidden;
     }
 
-    if (nonCount === 2) {
-      message.innerText = "😏 Hmm… vraiment ? Réfléchis encore";
-      nonBtn.style.transform = "scale(0.7)";
+    h1 {
+      margin-bottom: 20px;
     }
 
-    if (nonCount === 3) {
-      message.innerText = "😈 Trop tard… maintenant il fuit 😏";
-      fuiteActive = true;
-    }
-  }
-
-  function fuir() {
-    if (!fuiteActive) return;
-
-    const x = Math.random() * (window.innerWidth - nonBtn.offsetWidth);
-    const y = Math.random() * (window.innerHeight - nonBtn.offsetHeight);
-
-    nonBtn.style.position = "absolute";
-    nonBtn.style.left = x + "px";
-    nonBtn.style.top = y + "px";
-  }
-
-  nonBtn.addEventListener("mouseover", fuir);
-</script>
-
-  let nonCount = 0;
-  let fuiteActive = false;
-
-  const nonBtn = document.getElementById("non");
-  const message = document.getElementById("message");
-
-  function oui() {
-    alert("💖 J’étais sûr de toi 💖");
-  }
-
-  function nonClique() {
-    nonCount++;
-
-    if (nonCount === 1) {
-      message.innerText = "🤔 Je pense que tu t’es trompée… réessaie 😉";
+    #message {
+      font-size: 18px;
+      margin: 20px;
+      min-height: 24px;
     }
 
-    if (nonCount === 2) {
-      message.innerText = "😏 Hmm… vraiment ? Réfléchis encore";
-      nonBtn.style.transform = "scale(0.7)";
+    button {
+      font-size: 20px;
+      padding: 12px 30px;
+      margin: 20px;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>💌 Veux-tu être ma Valentine ? 💌</h1>
+
+  <div id="message"></div>
+
+  <button id="oui" onclick="oui()">Oui 💖</button>
+  <button id="non" onclick="nonClique()">Non</button>
+
+  <script>
+    let nonCount = 0;
+    let fuiteActive = false;
+    let ouiScale = 1;
+
+    const nonBtn = document.getElementById("non");
+    const ouiBtn = document.getElementById("oui");
+    const message = document.getElementById("message");
+
+    function oui() {
+      alert("💖 J’étais sûr de toi 💖");
     }
 
-    if (nonCount === 3) {
-      message.innerText = "😈 Trop tard… maintenant il fuit 😏";
-      fuiteActive = true;
+    function nonClique() {
+      nonCount++;
+
+      if (nonCount === 1) {
+        message.innerText = "🤔 Je pense que tu t’es trompée… réessaie 😉";
+      }
+
+      if (nonCount === 2) {
+        message.innerText = "😏 Hmm… vraiment ? Réfléchis encore";
+        nonBtn.style.transform = "scale(0.7)";
+      }
+
+      if (nonCount >= 3) {
+        if (!fuiteActive) {
+          message.innerText = "😈 Trop tard… maintenant il fuit 😏";
+          fuiteActive = true;
+        } else {
+          message.innerText = "😏 Plus tu dis non… plus le oui grandit 💖";
+        }
+
+        // Le bouton Oui grandit à chaque clic sur Non
+        ouiScale += 0.2;
+        ouiBtn.style.transform = `scale(${ouiScale})`;
+      }
     }
-  }
 
-  function fuir() {
-    if (!fuiteActive) return;
+    function fuir() {
+      if (!fuiteActive) return;
 
-    const x = Math.random() * (window.innerWidth - nonBtn.offsetWidth);
-    const y = Math.random() * (window.innerHeight - nonBtn.offsetHeight);
+      const x = Math.random() * (window.innerWidth - nonBtn.offsetWidth);
+      const y = Math.random() * (window.innerHeight - nonBtn.offsetHeight);
 
-    nonBtn.style.position = "absolute";
-    nonBtn.style.left = x + "px";
-    nonBtn.style.top = y + "px";
-  }
+      nonBtn.style.position = "absolute";
+      nonBtn.style.left = x + "px";
+      nonBtn.style.top = y + "px";
+    }
 
-  nonBtn.addEventListener("mouseover", fuir);
-</script>
+    nonBtn.addEventListener("mouseover", fuir);
+  </script>
+
+</body>
+</html>
