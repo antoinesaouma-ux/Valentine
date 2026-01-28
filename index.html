@@ -1,228 +1,334 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Chat — idle → walk → run (8 frames)</title>
-<style>
-  :root{
-    --scale: 4;        /* mise à l'échelle visuelle */
-  }
-  html,body{height:100%;margin:0;background:#111;overflow:hidden}
-  .cat{
-    position:absolute;
-    width: var(--frame-w,32px);
-    height: var(--frame-h,32px);
-    background-image: url("image/cat.png"); /* <- adapte le chemin si besoin */
-    background-repeat: no-repeat;
-    image-rendering: pixelated;
-    transform-origin: center;
-    will-change: left, top, background-position, transform;
-  }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Chat — interaction</title>
+  <style>
+    :root{
+      --scale: 4;
+      --accent: #7c5cff;
+      --bg: #0f1020;
+      --glass: rgba(255,255,255,0.04);
+    }
+    html,body{
+      height:100%;
+      margin:0;
+      background:var(--bg);
+      overflow:hidden;
+      font-family:Inter, "Segoe UI", Roboto, system-ui, -apple-system, "Helvetica Neue", Arial;
+      color: #e8e8f0;
+    }
+
+/* --- Pixel cat sprite --- */
+.cat{
+  position:absolute;
+  width: var(--frame-w,32px);
+  height: var(--frame-h,32px);
+  background-image: url("image/cat.png"); /* <-- adapte le chemin si besoin */
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  transform-origin: center;
+  will-change: left, top, background-position, transform;
+  pointer-events:none;
+}
+
+/* --- Overlay UI --- */
+.overlay {
+  position: absolute;
+  inset: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.card {
+  pointer-events: auto;
+  width: min(720px, 92%);
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 6px 30px rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.04);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
+.card h1{ margin:0; font-size:18px; }
+.card p{ margin:0; color:#bfc0d9; font-size:13px; }
+
+.controls { display:flex; gap:12px; align-items:center; }
+
+.btn {
+  height:44px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-weight:600;
+  background:var(--glass);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.05);
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  transition: transform 220ms cubic-bezier(.2,.9,.3,1), opacity 220ms, left 800ms ease;
+  user-select:none;
+  position:relative;
+}
+.btn.primary {
+  background: linear-gradient(90deg, var(--accent), #5be3ff);
+  color: #061223;
+  border: none;
+  box-shadow: 0 6px 18px rgba(124,92,255,0.18);
+}
+.btn.secondary { background: transparent; border: 1px solid rgba(255,255,255,0.06); }
+
+.toast {
+  grid-column: 1 / -1;
+  color: #d6d7ff;
+  font-size:13px;
+  opacity:0;
+  transform: translateY(6px);
+  transition: opacity 220ms, transform 220ms;
+  pointer-events:none;
+}
+.toast.show { opacity:1; transform: translateY(0); }
+
+.note {
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  color: rgba(255,255,255,0.28);
+  font-size:12px;
+}
+
+@media (max-width:520px){
+  .card{ padding:14px; grid-template-columns:1fr; gap:10px; }
+  .controls{ justify-content:flex-end; }
+}
+  </style>
 </head>
 <body>
 
-<script>
-/* ===========================
-   RÉGLAGES — ADAPTE ICI
-   =========================== */
-const FRAME_W = 32;            // largeur d'une frame (px)
-const FRAME_H = 32;            // hauteur d'une frame (px)
-const FRAMES_PER_ROW = 8;      // tu as confirmé : 8 frames
-document.documentElement.style.setProperty('--frame-w', FRAME_W + 'px');
-document.documentElement.style.setProperty('--frame-h', FRAME_H + 'px');
+  <!-- Overlay question -->
+  <div class="overlay" id="overlay">
+    <div class="card" role="dialog" aria-modal="true" aria-label="Question">
+      <div>
+        <h1>Veux-tu adopter un chat ? 🐱</h1>
+        <p>Ils sont mignons, joueurs et parfois taquins. Clique :</p>
+      </div>
 
-/* ---------------------------
-   Animations définies (rows)
-   ---------------------------
-   Rappel : ligne visuelle 5 => row = 4 ; ligne 6 => row = 5
-*/
-const animations = {
-  idle: {
-    row: 7,          // ligne statique (par ex ligne 8 visuelle ; change si tu veux)
-    frames: 4,
-    speed: 500,      // ms par changement de frame (lent)
-    move: 0
-  },
-  walk: {
-    row: 4,          // LINE 5 (AUTORISÉ À BOUGER)
-    frames: FRAMES_PER_ROW,
-    speed: 120,      // ms par frame
-    move: 1.2        // px par tick (ajuste si nécessaire)
-  },
-  run: {
-    row: 5,          // LINE 6 (AUTORISÉ À BOUGER)
-    frames: FRAMES_PER_ROW,
-    speed: 80,
-    move: 2.6
-  }
-};
+  <div class="controls">
+    <button id="yesBtn" class="btn primary">Oui</button>
+    <button id="noBtn" class="btn secondary">Non</button>
+  </div>
 
-/* Sécurité : n'autorise le déplacement que sur row 4 et 5 */
-function getAnimSafe(name){
-  const a = animations[name];
-  if (a.move > 0 && a.row !== 4 && a.row !== 5){
-    console.error("Animation de déplacement interdite pour:", name);
-    return animations.idle;
-  }
-  return a;
-}
+  <div class="toast" id="toast">Oh vraiment ?</div>
+</div>
+  </div>
 
-/* ===========================
-   Variables globales
-   =========================== */
-let mouseX = window.innerWidth / 2;
-window.addEventListener('mousemove', e => mouseX = e.clientX);
+  <div class="note">Astuce : bouge la souris pour voir les chats réagir.</div>
 
-/* Hystérésis pour éviter clignotement walk/run */
-const DIST_RUN = 120;
-const DIST_WALK = 280;
-const DIST_IDLE = 420; // > DIST_WALK -> idle
+  <script>
+    /* ===========================
+       RÉGLAGES
+       =========================== */
+    const FRAME_W = 32;
+    const FRAME_H = 32;
+    const FRAMES_PER_ROW = 8;
+    document.documentElement.style.setProperty('--frame-w', FRAME_W + 'px');
+    document.documentElement.style.setProperty('--frame-h', FRAME_H + 'px');
 
-/* Fonction utile pour clamp */
-const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+    const animations = {
+      idle: { row: 7, frames: 4, speed: 500, move: 0 },
+      walk: { row: 4, frames: FRAMES_PER_ROW, speed: 120, move: 1.2 },
+      run:  { row: 5, frames: FRAMES_PER_ROW, speed: 80,  move: 2.6 }
+    };
 
-/* ===========================
-   Création d'un chat
-   =========================== */
-function createCat(opts = {}) {
-  const cat = document.createElement('div');
-  cat.className = 'cat';
-  cat.style.width = FRAME_W + 'px';
-  cat.style.height = FRAME_H + 'px';
-  // position initiale
-  let posX = ('x' in opts) ? opts.x : Math.random() * (window.innerWidth - 100);
-  let posY = ('y' in opts) ? opts.y : Math.random() * (window.innerHeight - FRAME_H);
-  cat.style.left = posX + 'px';
-  cat.style.top = posY + 'px';
-  // état & animation en cours
-  let state = opts.anim || 'idle';
-  let currentAnim = getAnimSafe(state);
-  let frameIndex = 0;
-  let frameDir = 1; // pour ping-pong si souhaité (ici on boucle)
-  let lastFrameAt = performance.now();
-
-  document.body.appendChild(cat);
-
-  function setState(newState){
-    if (newState === state) return;
-    state = newState;
-    currentAnim = getAnimSafe(state);
-    frameIndex = 0;
-    lastFrameAt = performance.now();
-  }
-
-  function updateFrame(now){
-    const elapsed = now - lastFrameAt;
-    if (elapsed >= currentAnim.speed){
-      lastFrameAt = now;
-      // simple boucle 0..frames-1
-      frameIndex = (frameIndex + 1) % currentAnim.frames;
-      // applique la position du background
-      const bx = -frameIndex * FRAME_W;
-      const by = -currentAnim.row * FRAME_H;
-      cat.style.backgroundPosition = `${bx}px ${by}px`;
+    function getAnimSafe(name){
+      const a = animations[name];
+      if (!a) return animations.idle;
+      return a;
     }
-  }
 
-  // boucle principale: mouvement + état
-  function tick(now){
-    // 1) calc distance horizontale absolue
-    const d = Math.abs((posX + FRAME_W/2) - mouseX);
+    function clamp(v, a, b){ return Math.min(Math.max(v, a), b); }
 
-    // 2) logique état avec hystérésis (évite oscillations)
-    // si on est en run, nécessite sortir à > DIST_RUN + 20 pour revenir
-    if (d < DIST_RUN) {
-      setState('run');
-    } else if (d < DIST_WALK) {
-      // si on vient de run, rester run jusqu'à seuil de sortie légèrement plus haut
-      if (state === 'run' && d < DIST_RUN + 18) {
-        setState('run');
-      } else {
-        setState('walk');
+    /* ===========================
+       createCat
+       =========================== */
+    function createCat(opts = {}) {
+      const startX = opts.x ?? 120;
+      const startY = opts.y ?? 220;
+      let state = opts.anim ?? 'idle';
+      const cat = document.createElement('div');
+      cat.className = 'cat';
+      cat.style.left = startX + 'px';
+      cat.style.top = startY + 'px';
+      document.body.appendChild(cat);
+
+      let posX = startX;
+      let lastFrameChange = performance.now();
+      let frameIndex = 0;
+      let lastTick = performance.now();
+      let currentAnim = getAnimSafe(state);
+
+      let mouseX = window.innerWidth / 2;
+      window.addEventListener('mousemove', e => mouseX = e.clientX);
+
+      function setState(name){
+        currentAnim = getAnimSafe(name);
+        frameIndex = 0;
+        lastFrameChange = performance.now();
       }
-    } else if (d < DIST_IDLE) {
-      // rester walk si proche du bord
-      setState('walk');
-    } else {
-      setState('idle');
-    }
 
-    // 3) déplacement horizontal uniquement (fuit la souris)
-    const dirToMouse = (posX + FRAME_W/2) - mouseX; // >0 => mouse à gauche -> on va à droite (fuite)
-    if (currentAnim.move > 0 && Math.abs(dirToMouse) < 9999) {
-      // si la souris est proche, s'éloigner ; sinon rester (idle)
-      if (Math.abs(dirToMouse) < DIST_IDLE) {
-        // le chat fuit vers l'opposé de la souris
-        if (dirToMouse < 0) {
-          // souris à droite -> chat doit aller à gauche (diminuer posX)
-          posX -= currentAnim.move;
-          cat.style.transform = `scale(var(--scale,4)) scaleX(-1)`;
-        } else {
-          // souris à gauche -> chat va à droite
-          posX += currentAnim.move;
-          cat.style.transform = `scale(var(--scale,4)) scaleX(1)`;
+      function updateFrame(now){
+        if (now - lastFrameChange >= currentAnim.speed) {
+          frameIndex = (frameIndex + 1) % Math.max(1, currentAnim.frames);
+          lastFrameChange = now;
+          const bgX = -frameIndex * FRAME_W;
+          const bgY = -currentAnim.row * FRAME_H;
+          cat.style.backgroundPosition = `${bgX}px ${bgY}px`;
         }
       }
-    } else {
-      // idle: garde la même orientation
+
+      function tick(now){
+        const dt = Math.min(60, now - lastTick);
+        lastTick = now;
+
+        const centerX = posX + FRAME_W/2;
+        const d = Math.abs(centerX - mouseX);
+
+        if (d < 120) {
+          setState('run');
+        } else if (d < 280) {
+          setState('walk');
+        } else {
+          setState('idle');
+        }
+
+        const dirToMouse = centerX - mouseX;
+        if (currentAnim.move > 0) {
+          if (Math.abs(dirToMouse) < 420) {
+            if (dirToMouse < 0) {
+              posX -= currentAnim.move;
+              cat.style.transform = `scale(var(--scale,4)) scaleX(-1)`;
+            } else {
+              posX += currentAnim.move;
+              cat.style.transform = `scale(var(--scale,4)) scaleX(1)`;
+            }
+          }
+        } else {
+          cat.style.transform = `scale(var(--scale,4))`;
+        }
+
+        // nudge back (correction douce si sortie)
+        const OUT_LEFT = -FRAME_W * 0.5;
+        const OUT_RIGHT = window.innerWidth - FRAME_W + FRAME_W * 0.5;
+
+        if (posX < OUT_LEFT) {
+          posX += Math.max(0.5, (OUT_LEFT - posX) * 0.12);
+        } else if (posX > OUT_RIGHT) {
+          posX -= Math.max(0.5, (posX - OUT_RIGHT) * 0.12);
+        }
+
+        posX = clamp(posX, -FRAME_W, window.innerWidth - FRAME_W + FRAME_W);
+
+        cat.style.left = Math.round(posX) + 'px';
+        updateFrame(now);
+        requestAnimationFrame(tick);
+      }
+
+      cat.style.backgroundPosition = `0px ${-currentAnim.row * FRAME_H}px`;
       cat.style.transform = `scale(var(--scale,4))`;
+      requestAnimationFrame(tick);
+
+      return { el: cat, setState };
     }
 
-    // limites autorisées (petite marge visuelle)
-const OUT_LEFT = -FRAME_W * 0.5;
-const OUT_RIGHT = window.innerWidth - FRAME_W + FRAME_W * 0.5;
+    /* ===========================
+       Création initiale et UI
+       =========================== */
+    const initialCats = [
+      { x: 120, y: 220, anim: 'idle' },
+      { x: 420, y: 320, anim: 'walk' },
+      { x: 760, y: 420, anim: 'idle' }
+    ];
+    const createdCats = [];
+    initialCats.forEach(cfg => createdCats.push(createCat(cfg)));
 
-// après le déplacement, ramener doucement si trop sorti
-if (posX < OUT_LEFT) {
-  // si trop à gauche, pousse doucement vers l'intérieur
-  posX += Math.max(1, (OUT_LEFT - posX) * 0.1);
-} else if (posX > OUT_RIGHT) {
-  // si trop à droite, pousse doucement vers l'intérieur
-  posX -= Math.max(1, (posX - OUT_RIGHT) * 0.1);
-}
+    const noBtn = document.getElementById('noBtn');
+    const yesBtn = document.getElementById('yesBtn');
+    const toast  = document.getElementById('toast');
+    let noClicks = 0;
+    let noEscaped = false;
 
-// clamp finale légère pour éviter artefacts
-posX = clamp(posX, -FRAME_W, window.innerWidth - FRAME_W + FRAME_W);
+    function showToast(msg, t = 1500){
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toast._timeout);
+      toast._timeout = setTimeout(()=> toast.classList.remove('show'), t);
+    }
 
+    noBtn.addEventListener('click', (e) => {
+      if (noEscaped) return;
+      noClicks++;
+      showToast(["Tu es sûr ?", "Vraiment ?", "Bon d'accord..."][Math.min(2, noClicks-1)]);
+      const scale = Math.max(0.45, 1 - noClicks * 0.22);
+      noBtn.style.transform = `scale(${scale})`;
+      noBtn.style.transition = 'transform 260ms cubic-bezier(.2,.9,.3,1)';
 
-    // 5) appliquer position et frame
-    cat.style.left = Math.round(posX) + 'px';
-    updateFrame(now);
+      if (noClicks >= 3) {
+        noEscaped = true;
+        const rect = noBtn.getBoundingClientRect();
+        const startLeft = rect.left;
+        const endLeft = window.innerWidth + 120;
+        const duration = 900;
+        const start = performance.now();
 
-    requestAnimationFrame(tick);
-  }
+        noBtn.style.pointerEvents = 'none';
 
-  // initial background pos
-  cat.style.backgroundPosition = `0px ${-currentAnim.row * FRAME_H}px`;
-  // scale visuel (pixel art)
-  cat.style.transform = `scale(var(--scale,4))`;
+        function animateBtn(t){
+          const p = Math.min(1, (t - start) / duration);
+          const ease = 1 - Math.pow(1 - p, 3);
+          const cur = startLeft + (endLeft - startLeft) * ease;
+          noBtn.style.position = 'fixed';
+          noBtn.style.left = cur + 'px';
+          noBtn.style.top = rect.top + 'px';
+          noBtn.style.zIndex = 9999;
+          if (p < 1) requestAnimationFrame(animateBtn);
+          else {
+            addMoreCatsAfterEscape();
+            const overlay = document.getElementById('overlay');
+            if (overlay) overlay.style.pointerEvents = 'none';
+          }
+        }
+        requestAnimationFrame(animateBtn);
+      }
+    });
 
-  requestAnimationFrame(tick);
+    yesBtn.addEventListener('click', () => {
+      showToast("Trop bien ! 🐾", 1200);
+      yesBtn.disabled = true;
+      yesBtn.style.opacity = 0.8;
+    });
 
-  // retourne l'élément et une fonction pour changer l'anim depuis l'extérieur si besoin
-  return {
-    el: cat,
-    setState: setState
-  };
-}
+    function addMoreCatsAfterEscape(){
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      for (let i=0;i<5;i++){
+        const x = Math.floor(60 + Math.random() * Math.max(200, w - 120));
+        const y = Math.floor(Math.max(80, h - 180 - Math.random() * 260));
+        createdCats.push(createCat({ x, y, anim: Math.random() > 0.5 ? 'idle' : 'walk' }));
+      }
+      showToast("Ils sont arrivés !", 1800);
+    }
 
-/* ===========================
-   Création de quelques chats
-   =========================== */
-createCat({ x: 120, y: 220, anim: 'idle' });
-createCat({ x: 420, y: 320, anim: 'walk' });
-createCat({ x: 760, y: 420, anim: 'idle' });
+    document.documentElement.style.setProperty('--scale', 4);
 
-/* Ajuste le scale CSS global (facultatif) */
-document.documentElement.style.setProperty('--scale', 4);
-
-/* Re-calculer si la fenêtre change */
-window.addEventListener('resize', () => {
-  mouseX = Math.min(mouseX, window.innerWidth);
-});
-</script>
-
+    window.addEventListener('resize', () => {
+      // rien de critique ici
+    });
+  </script>
 </body>
 </html>
