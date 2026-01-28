@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -15,10 +16,11 @@
       --muted: #bfc0d9;
 
   /* Échelle des chats (scale entier) */
-  --cat-scale: 8;
+  --cat-scale: 4;
   --frame-w: 32; /* largeur d'une frame en px (non multipliée) */
   --frame-h: 32; /* hauteur d'une frame en px */
   --frames-per-row: 8;
+  --sheet-rows: 8; /* nombre total de lignes (rows) dans la sprite sheet */
 }
 
 html,body{height:100%;margin:0;background:var(--bg);font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; color:var(--text); display:flex; align-items:center; justify-content:center;}
@@ -75,7 +77,6 @@ h1 { margin: 6px 0 0 0; font-size:20px; letter-spacing:0.2px; }
   transform-origin: center;
   will-change: left, top, background-position, transform;
   z-index: 8;
-  /* On applique le retournement via scaleX mais on garde l'agrandissement réalisé avec width/height */
 }
 
 @media (max-width:420px){
@@ -102,24 +103,32 @@ h1 { margin: 6px 0 0 0; font-size:20px; letter-spacing:0.2px; }
   <div class="toast" id="toast">Oh vraiment ?</div>
 </div>
 
-<div class="note">Astuce : bouge la souris pour voir les chats réagir (après le 3ᵉ non).</div>
+<div class="note">Astuce : bouge la souris pour voir les chats réagir (après le 3ᵉ "Non").</div>
   </div>
 
   <script>
-    /* ================= RÉGLAGES ================= */
+    /* ========== RÉGLAGES ========== */
     const FRAME_W = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--frame-w')) || 32;
     const FRAME_H = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--frame-h')) || 32;
     const FRAMES_PER_ROW = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--frames-per-row')) || 8;
+    const SHEET_ROWS = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sheet-rows')) || 8;
     const CAT_SCALE = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cat-scale')) || 4;
 
     // Animations (row indices start at 0)
     const animations = {
       idle: { row: 7, frames: 4, speed: 500, move: 0 },
-      walk: { row: 4, frames: FRAMES_PER_ROW, speed: 120, move: 1.0 },
-      run:  { row: 5, frames: FRAMES_PER_ROW, speed: 80,  move: 2.4 }
+      walk: { row: 4, frames: FRAMES_PER_ROW, speed: 120, move: 1.2 },
+      run:  { row: 5, frames: FRAMES_PER_ROW, speed: 80,  move: 3.0 }
     };
 
     const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+
+    let mouseX = window.innerWidth / 2;
+
+    // Update global mouseX (only horizontal)
+    window.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+    });
 
     function createCat(opts = {}) {
       const cat = document.createElement('div');
@@ -132,8 +141,20 @@ h1 { margin: 6px 0 0 0; font-size:20px; letter-spacing:0.2px; }
       cat._frameIndex = 0;
       cat._lastFrameTime = performance.now();
       cat._dir = Math.random() > 0.5 ? 1 : -1;
+      cat._posX = x;
+      cat._posY = y;
 
-      // flip and preserve scale: using transform scaleX to flip, width/height already scaled
+      // Set background-size immediately so the full sheet is scaled and we only show one frame
+      const sheetWidth  = FRAMES_PER_ROW * FRAME_W * CAT_SCALE;
+      const sheetHeight = SHEET_ROWS * FRAME_H * CAT_SCALE;
+      cat.style.backgroundSize = sheetWidth + 'px ' + sheetHeight + 'px';
+
+      // initial background-position (one frame)
+      const px0 = -cat._frameIndex * FRAME_W * CAT_SCALE;
+      const py0 = -cat._anim.row * FRAME_H * CAT_SCALE;
+      cat.style.backgroundPosition = px0 + 'px ' + py0 + 'px';
+
+      // initial flip
       cat.style.transform = `scaleX(${cat._dir})`;
 
       document.body.appendChild(cat);
@@ -144,25 +165,43 @@ h1 { margin: 6px 0 0 0; font-size:20px; letter-spacing:0.2px; }
         if (now - cat._lastFrameTime > a.speed) {
           cat._frameIndex = (cat._frameIndex + 1) % a.frames;
           cat._lastFrameTime = now;
-          // backgroundPosition must account for original frame size * scale
           const px = -cat._frameIndex * FRAME_W * CAT_SCALE;
           const py = -a.row * FRAME_H * CAT_SCALE;
           cat.style.backgroundPosition = px + 'px ' + py + 'px';
-          // Also force background-size so sprite sheet scales correctly
-          // width of sheet = frames_per_row * frame_w * scale
-          cat.style.backgroundSize = (FRAMES_PER_ROW * FRAME_W * CAT_SCALE) + 'px auto';
         }
       }
 
-      let posX = x;
       function tick(now){
-        if (cat._anim.move !== 0) {
-          posX += cat._anim.move * cat._dir * 0.9;
-          if (posX < 8) { posX = 8; cat._dir = 1; cat.style.transform = `scaleX(1)`; }
-          if (posX > window.innerWidth - (FRAME_W * CAT_SCALE) - 8) { posX = window.innerWidth - (FRAME_W * CAT_SCALE) - 8; cat._dir = -1; cat.style.transform = `scaleX(-1)`; }
+        // Reaction to mouse: cats move horizontally away from mouseX
+        const dx = (cat._posX + (FRAME_W*CAT_SCALE)/2) - mouseX; // positive if cat is right of mouse
+        const dist = Math.abs(dx);
+        // determine behaviour: if close, run; if mid, walk; else idle
+        if (dist < 120) cat._anim = animations.run;
+        else if (dist < 320) cat._anim = animations.walk;
+        else cat._anim = animations.idle;
+
+        // Direction: move away horizontally only
+        if (dist > 40) {
+          const dirAway = dx > 0 ? 1 : -1; // if cat is right of mouse, dirAway=1 (move right)
+          // speed scales with animation move and closeness
+          const speedFactor = clamp((180 - dist) / 180, 0.1, 1.0); // closer => faster (for run)
+          const baseMove = cat._anim.move;
+          const delta = baseMove * (1 + (1 - speedFactor)) * (dirAway); // move away
+          cat._posX += delta;
+          // keep within bounds horizontally
+          const minX = 6;
+          const maxX = window.innerWidth - FRAME_W * CAT_SCALE - 6;
+          if (cat._posX < minX) cat._posX = minX;
+          if (cat._posX > maxX) cat._posX = maxX;
+          // set flip according to movement direction (face away from mouse)
+          const facing = dirAway > 0 ? 1 : -1;
+          cat.style.transform = `scaleX(${facing})`;
         }
-        posX = clamp(posX, -FRAME_W * CAT_SCALE, window.innerWidth - FRAME_W * CAT_SCALE);
-        cat.style.left = Math.round(posX) + 'px';
+
+        cat.style.left = Math.round(cat._posX) + 'px';
+        // keep vertical fixed (no up/down)
+        cat.style.top = Math.round(cat._posY) + 'px';
+
         updateFrame(now);
         cat._raf = requestAnimationFrame(tick);
       }
@@ -190,7 +229,7 @@ h1 { margin: 6px 0 0 0; font-size:20px; letter-spacing:0.2px; }
       toast._timeout = setTimeout(()=> toast.classList.remove('show'), t);
     }
 
-    // Bouton "Non" : fuite smooth et plus rapide
+    // Bouton "Non" : fuite smooth et rapide
     noBtn.addEventListener('click', () => {
       if (noEscaped) return;
       noClicks++;
@@ -203,15 +242,13 @@ h1 { margin: 6px 0 0 0; font-size:20px; letter-spacing:0.2px; }
       if (noClicks >= 3) {
         noEscaped = true;
 
-        // Animation d'échappement plus rapide et smooth
         const rect = noBtn.getBoundingClientRect();
         const startX = rect.left;
-        const endX = window.innerWidth + 200; // destination hors écran
-        const duration = 420; // ms -> rapide
-        const easing = t => 1 - Math.pow(1 - t, 3); // easeOutCubic
+        const endX = window.innerWidth + 200;
+        const duration = 420;
+        const easing = t => 1 - Math.pow(1 - t, 3);
         const start = performance.now();
 
-        // Pour éviter sauts visuels, on switch en position:fixed
         noBtn.style.position = 'fixed';
         noBtn.style.top = rect.top + 'px';
         noBtn.style.left = startX + 'px';
@@ -223,13 +260,9 @@ h1 { margin: 6px 0 0 0; font-size:20px; letter-spacing:0.2px; }
           const e = easing(p);
           const cur = startX + (endX - startX) * e;
           noBtn.style.left = cur + 'px';
-          // léger rotation pendant l'échappée pour effet mignon
           noBtn.style.transform = `translateZ(0) rotate(${e * 18}deg) scale(0.85)`;
           if (p < 1) requestAnimationFrame(animate);
-          else {
-            // après l'échappée, spawn des chats
-            spawnCatsAfterEscape();
-          }
+          else spawnCatsAfterEscape();
         }
         requestAnimationFrame(animate);
       }
@@ -251,19 +284,25 @@ h1 { margin: 6px 0 0 0; font-size:20px; letter-spacing:0.2px; }
         const y = baseY - Math.floor(Math.random() * 20);
         const anim = Math.random() > 0.5 ? 'walk' : 'idle';
         const cat = createCat({ x, y, anim });
-        // légère variation de timing du frame initial
+        // randomize initial frame so they don't animate in sync
         cat._frameIndex = Math.floor(Math.random() * (cat._anim.frames || 4));
         createdCats.push(cat);
       }
       showToast("Ils sont là... 🐾", 1400);
     }
 
+    // Clean up
     window.addEventListener('beforeunload', () => {
       createdCats.forEach(c => c.destroy && c.destroy());
     });
 
-    // debug: si tu veux forcer l'apparition au chargement, décommente
+    // debug helper (décommenter pour forcer l'apparition)
     // spawnCatsAfterEscape();
+
+    // On resize, clamp mice and cat positions
+    window.addEventListener('resize', () => {
+      mouseX = clamp(mouseX, 0, window.innerWidth);
+    });
   </script>
 </body>
 </html>
