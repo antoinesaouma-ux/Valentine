@@ -1,87 +1,42 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <title>Question très importante 💘</title>
+<script>
+  let nonCount = 0;
+  let fuiteActive = false;
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #ffe6f0;
-      text-align: center;
-      padding-top: 100px;
-      overflow: hidden;
+  const nonBtn = document.getElementById("non");
+  const message = document.getElementById("message");
+
+  function oui() {
+    alert("💖 J’étais sûr de toi 💖");
+  }
+
+  function nonClique() {
+    nonCount++;
+
+    if (nonCount === 1) {
+      message.innerText = "🤔 Je pense que tu t’es trompée… réessaie 😉";
     }
 
-    h1 {
-      margin-bottom: 30px;
+    if (nonCount === 2) {
+      message.innerText = "😏 Hmm… vraiment ? Réfléchis encore";
+      nonBtn.style.transform = "scale(0.7)";
     }
 
-    #message {
-      font-size: 18px;
-      margin: 20px;
-      min-height: 24px;
+    if (nonCount === 3) {
+      message.innerText = "😈 Trop tard… maintenant il fuit 😏";
+      fuiteActive = true;
     }
+  }
 
-    button {
-      font-size: 20px;
-      padding: 10px 30px;
-      margin: 20px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
+  function fuir() {
+    if (!fuiteActive) return;
 
-    #non {
-      position: relative;
-    }
-  </style>
-</head>
-<body>
+    const x = Math.random() * (window.innerWidth - nonBtn.offsetWidth);
+    const y = Math.random() * (window.innerHeight - nonBtn.offsetHeight);
 
-  <h1>💌 Veux-tu être ma Valentine ? 💌</h1>
+    nonBtn.style.position = "absolute";
+    nonBtn.style.left = x + "px";
+    nonBtn.style.top = y + "px";
+  }
 
-  <div id="message"></div>
-
-  <button onclick="oui()">Oui 💖</button>
-  <button id="non" onclick="nonClique()">Non</button>
-
-  <script>
-    let nonCount = 0;
-    const nonBtn = document.getElementById("non");
-    const message = document.getElementById("message");
-
-    function oui() {
-      alert("💖 J’étais sûr de toi 💖");
-    }
-
-    function nonClique() {
-      nonCount++;
-
-      if (nonCount === 1) {
-        message.innerText = "🤔 Je pense que tu t’es trompée… réessaie 😉";
-      }
-
-      if (nonCount === 2) {
-        message.innerText = "😏 Hmm… vraiment ? Réfléchis encore";
-        nonBtn.style.transform = "scale(0.7)";
-      }
-
-      if (nonCount >= 3) {
-        message.innerText = "😈 Trop tard… le bouton est devenu timide";
-        nonBtn.onclick = null;
-        nonBtn.addEventListener("mouseover", fuir);
-      }
-    }
-
-    function fuir() {
-      const x = Math.random() * (window.innerWidth - nonBtn.offsetWidth);
-      const y = Math.random() * (window.innerHeight - nonBtn.offsetHeight);
-
-      nonBtn.style.position = "absolute";
-      nonBtn.style.left = x + "px";
-      nonBtn.style.top = y + "px";
-    }
-  </script>
-
-</body>
-</html>
+  nonBtn.addEventListener("mouseover", fuir);
+</script>
