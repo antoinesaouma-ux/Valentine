@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Chats en mouvement 🐱</title>
+<title>Chats qui fuient 🐱</title>
 
 <style>
 body {
@@ -10,6 +10,7 @@ body {
   height: 100vh;
   background: #111;
   overflow: hidden;
+  cursor: none;
 }
 
 /* 🐱 BASE CHAT */
@@ -20,7 +21,6 @@ body {
 
   background-image: url("image/cat.png");
   background-repeat: no-repeat;
-
   image-rendering: pixelated;
 
   transform: scale(4);
@@ -36,78 +36,84 @@ body {
 const frameW = 32;
 const frameH = 32;
 
+/* 🖱️ POSITION SOURIS */
+let mouseX = window.innerWidth / 2;
+document.addEventListener("mousemove", e => {
+  mouseX = e.clientX;
+});
+
 /* ✅ ANIMATIONS */
 const animations = {
   walk: {
     frames: [[0,4],[1,4],[2,4],[3,4],[4,4],[5,4]],
     speed: 140,
-    move: 0.8
+    move: 1.2
   },
   run: {
     frames: [[0,2],[1,2],[2,2],[3,2]],
     speed: 90,
-    move: 1.8
+    move: 2.2
   },
-  jump: {
-    frames: [[0,3],[1,3],[2,3],[3,3]],
-    speed: 120,
-    move: 1.2,
-    jump: true
+  sneak: {
+    frames: [[0,5],[1,5],[2,5]],
+    speed: 220,
+    move: 0.6
   }
 };
 
-/* 🐱 CRÉATION D’UN CHAT */
-function createMovingCat({ x, y, animation }) {
+/* 🐱 CRÉATION D’UN CHAT QUI FUIT */
+function createScaredCat({ x, y, animation }) {
   const cat = document.createElement("div");
   cat.className = "cat";
   document.body.appendChild(cat);
 
   let posX = x;
-  let posY = y;
-
-  let frameIndex = 0;
-  let direction = 1;
+  const posY = y; // ✅ Y FIXE
+  let frame = 0;
+  let dir = 1;
 
   const anim = animations[animation];
 
   /* 🎞️ ANIMATION SPRITE */
   setInterval(() => {
-    const [col, row] = anim.frames[frameIndex];
+    const [col, row] = anim.frames[frame];
     cat.style.backgroundPosition =
       `-${col * frameW}px -${row * frameH}px`;
 
-    frameIndex += direction;
-    if (frameIndex === anim.frames.length - 1 || frameIndex === 0) {
-      direction *= -1;
+    frame += dir;
+    if (frame === anim.frames.length - 1 || frame === 0) {
+      dir *= -1;
     }
   }, anim.speed);
 
-  /* 🏃‍♂️ DÉPLACEMENT */
-  let jumpOffset = 0;
-  let jumpDir = -1;
-
+  /* 🏃‍♂️ FUITE GAUCHE / DROITE */
   setInterval(() => {
-    posX += anim.move;
+    const distance = posX - mouseX;
 
-    if (anim.jump) {
-      jumpOffset += jumpDir * 1.5;
-      if (jumpOffset < -20 || jumpOffset > 0) jumpDir *= -1;
+    if (Math.abs(distance) < 300) {
+      if (distance < 0) {
+        // souris à droite → fuit à gauche
+        posX -= anim.move;
+        cat.style.transform = "scale(4) scaleX(-1)";
+      } else {
+        // souris à gauche → fuit à droite
+        posX += anim.move;
+        cat.style.transform = "scale(4) scaleX(1)";
+      }
     }
+
+    /* 🔁 limites écran */
+    posX = Math.max(-50, Math.min(window.innerWidth - 50, posX));
 
     cat.style.left = posX + "px";
-    cat.style.top = posY + jumpOffset + "px";
-
-    /* 🔁 LOOP ÉCRAN */
-    if (posX > window.innerWidth) {
-      posX = -100;
-    }
+    cat.style.top = posY + "px"; // ✅ PAS DE MOUVEMENT VERTICAL
   }, 16);
 }
 
-/* ✅ CRÉATION DES 3 CHATS */
-createMovingCat({ x: -100, y: 320, animation: "walk" });
-createMovingCat({ x: -300, y: 380, animation: "run" });
-createMovingCat({ x: -500, y: 260, animation: "jump" });
+/* ✅ 3 CHATS — Y DIFFÉRENT MAIS IMMOBILE */
+createScaredCat({ x: 200, y: 260, animation: "walk" });
+createScaredCat({ x: 500, y: 340, animation: "run" });
+createScaredCat({ x: 800, y: 420, animation: "sneak" });
 </script>
 
 </body>
