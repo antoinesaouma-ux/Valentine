@@ -2,21 +2,20 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Chat animé 🐱</title>
+<title>Chats en mouvement 🐱</title>
 
 <style>
 body {
   margin: 0;
   height: 100vh;
   background: #111;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  overflow: hidden;
 }
 
-/* 🐱 CHAT */
+/* 🐱 BASE CHAT */
 .cat {
-  width: 32px;   /* taille d'UNE frame */
+  position: absolute;
+  width: 32px;
   height: 32px;
 
   background-image: url("image/cat.png");
@@ -24,7 +23,6 @@ body {
 
   image-rendering: pixelated;
 
-  /* 🔍 AGRANDISSEMENT */
   transform: scale(4);
   transform-origin: center;
 }
@@ -33,41 +31,83 @@ body {
 
 <body>
 
-<div class="cat" id="cat"></div>
-
 <script>
-/* ✅ PARAMÈTRES */
-const frameWidth = 32;
-const frameHeight = 32;
+/* ✅ CONSTANTES */
+const frameW = 32;
+const frameH = 32;
 
-/* ✅ FRAMES DE L'ANIMATION (colonne, ligne) */
-const frames = [
-  [0, 4],
-  [1, 4],
-  [2, 4],
-  [3, 4],
-  [4, 4],
-  [5, 4]
-];
-
-/* 🔁 PING‑PONG */
-let index = 0;
-let direction = 1;
-
-const cat = document.getElementById("cat");
-
-setInterval(() => {
-  const [col, row] = frames[index];
-
-  cat.style.backgroundPosition =
-    `-${col * frameWidth}px -${row * frameHeight}px`;
-
-  index += direction;
-
-  if (index === frames.length - 1 || index === 0) {
-    direction *= -1;
+/* ✅ ANIMATIONS */
+const animations = {
+  walk: {
+    frames: [[0,4],[1,4],[2,4],[3,4],[4,4],[5,4]],
+    speed: 140,
+    move: 0.8
+  },
+  run: {
+    frames: [[0,2],[1,2],[2,2],[3,2]],
+    speed: 90,
+    move: 1.8
+  },
+  jump: {
+    frames: [[0,3],[1,3],[2,3],[3,3]],
+    speed: 120,
+    move: 1.2,
+    jump: true
   }
-}, 120); // vitesse (plus petit = plus rapide)
+};
+
+/* 🐱 CRÉATION D’UN CHAT */
+function createMovingCat({ x, y, animation }) {
+  const cat = document.createElement("div");
+  cat.className = "cat";
+  document.body.appendChild(cat);
+
+  let posX = x;
+  let posY = y;
+
+  let frameIndex = 0;
+  let direction = 1;
+
+  const anim = animations[animation];
+
+  /* 🎞️ ANIMATION SPRITE */
+  setInterval(() => {
+    const [col, row] = anim.frames[frameIndex];
+    cat.style.backgroundPosition =
+      `-${col * frameW}px -${row * frameH}px`;
+
+    frameIndex += direction;
+    if (frameIndex === anim.frames.length - 1 || frameIndex === 0) {
+      direction *= -1;
+    }
+  }, anim.speed);
+
+  /* 🏃‍♂️ DÉPLACEMENT */
+  let jumpOffset = 0;
+  let jumpDir = -1;
+
+  setInterval(() => {
+    posX += anim.move;
+
+    if (anim.jump) {
+      jumpOffset += jumpDir * 1.5;
+      if (jumpOffset < -20 || jumpOffset > 0) jumpDir *= -1;
+    }
+
+    cat.style.left = posX + "px";
+    cat.style.top = posY + jumpOffset + "px";
+
+    /* 🔁 LOOP ÉCRAN */
+    if (posX > window.innerWidth) {
+      posX = -100;
+    }
+  }, 16);
+}
+
+/* ✅ CRÉATION DES 3 CHATS */
+createMovingCat({ x: -100, y: 320, animation: "walk" });
+createMovingCat({ x: -300, y: 380, animation: "run" });
+createMovingCat({ x: -500, y: 260, animation: "jump" });
 </script>
 
 </body>
