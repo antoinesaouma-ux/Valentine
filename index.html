@@ -1,19 +1,19 @@
 <!--
 ===========================================================
 💌 Carte Valentine Interactive avec Chats Animés 🐱
++ Fond animé : poussière lumineuse + parallaxe doux 🌌🌠
 -----------------------------------------------------------
-- Fichier unique index.html (HTML + CSS + JS inline)
-- Carte carrée centrée avec message romantique (style Cyrano)
-- Boutons Oui / Non
-- Les chats apparaissent UNIQUEMENT après 3 clics sur "Non"
-- Chats animés via sprite-sheet (ping-pong)
-- Chats du milieu fuient la souris horizontalement
-- Code entièrement commenté et facilement modifiable
+- Fichier unique index.html
+- Carte carrée centrée
+- Chats invisibles avant 3 clics sur "Non"
+- Sprite-sheet animée ping-pong
+- Fond animé CSS + JS (sans images)
+===========================================================
 
-👉 Modifications rapides :
-- Sprite : modifier CAT_SRC
-- Animation : FRAME_W / FRAME_H / TOTAL_FRAMES / FPS
-- Comportement : FEAR_RADIUS / HOVER_THRESHOLD / vitesses
+MODIFICATIONS RAPIDES :
+- Intensité parallaxe : PARALLAX_STRENGTH
+- Nombre de particules : PARTICLE_COUNT
+- Vitesse poussière : PARTICLE_SPEED
 ===========================================================
 -->
 
@@ -24,22 +24,41 @@
 <title>Ma Valentine ❤️</title>
 
 <style>
-/* ===================== RESET & PAGE ===================== */
-html, body {
+/* =========================================================
+   ==================== FOND ANIMÉ =========================
+   ========================================================= */
+
+body {
   margin: 0;
-  padding: 0;
   height: 100%;
   font-family: 'Georgia', serif;
-  background: linear-gradient(135deg, #ffe6eb, #fff);
   display: flex;
   justify-content: center;
   align-items: center;
+  background: radial-gradient(circle at top, #ffe6f0, #ffd1dc);
+  overflow: hidden;
+}
+
+/* Canvas poussière */
+#dust {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+}
+
+/* Couche parallaxe */
+#parallax {
+  position: fixed;
+  inset: -5%;
+  background: radial-gradient(circle at center, rgba(255,255,255,0.25), transparent 60%);
+  z-index: -1;
+  transition: transform 0.15s ease-out;
 }
 
 /* ===================== CARTE ===================== */
 .card {
   width: min(90vmin, 420px);
-  aspect-ratio: 1 / 1; /* ✅ format carré */
+  aspect-ratio: 1 / 1;
   background: #fff;
   border-radius: 20px;
   box-shadow: 0 20px 40px rgba(0,0,0,0.15);
@@ -75,17 +94,17 @@ button {
   color: #fff;
 }
 
-button:focus {
-  outline: 3px solid #000;
-}
-
 button.no {
   background: #aaa;
 }
 
-/* ===================== MESSAGE OUI ===================== */
+button:focus {
+  outline: 3px solid #000;
+}
+
+/* ===================== CONFIRMATION ===================== */
 .confirmation {
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   margin-top: 30px;
   color: #ff3366;
 }
@@ -95,7 +114,7 @@ button.no {
   position: absolute;
   width: calc(var(--fw) * var(--scale));
   height: calc(var(--fh) * var(--scale));
-  background-image: url('images/cat.png'); /* ⚠️ Chemin sprite ici */
+  background-image: url('images/cat.png'); /* ⚠️ sprite ici */
   background-repeat: no-repeat;
   image-rendering: pixelated;
   pointer-events: auto;
@@ -104,6 +123,9 @@ button.no {
 </head>
 
 <body>
+
+<canvas id="dust"></canvas>
+<div id="parallax"></div>
 
 <div class="card" id="card">
   <p>Je t’aime non pour ce que tu es, mais pour ce que je suis quand je suis avec toi.</p>
@@ -119,13 +141,12 @@ button.no {
 /* =========================================================
    ======================= CONFIG ==========================
    ========================================================= */
-const CAT_SRC = 'images/cat.png'; // ⚠️ sprite-sheet requise
+const CAT_SRC = 'images/cat.png';
 const FRAME_W = 64;
 const FRAME_H = 64;
 const FRAMES_PER_ROW = 8;
 const TOTAL_FRAMES = 16;
 const FPS = 10;
-const PINGPONG = true;
 const CAT_SCALE = 1.5;
 
 const FEAR_RADIUS = 160;
@@ -134,7 +155,12 @@ const FLEE_SPEED = 3.0;
 const PANIC_SPEED = 4.0;
 
 const HOVER_THRESHOLD = 3;
-const HOVER_NO_SPAWN_THRESHOLD = 3; // ✅ 3 clics sur "Non"
+const HOVER_NO_SPAWN_THRESHOLD = 3;
+
+/* Fond animé */
+const PARTICLE_COUNT = 90;      // quantité de poussière
+const PARTICLE_SPEED = 0.15;    // vitesse verticale
+const PARALLAX_STRENGTH = 18;   // intensité parallaxe
 
 /* ========================================================= */
 
@@ -151,12 +177,17 @@ let noCount = 0;
 let catsSpawned = false;
 let mouseX = 0;
 
-/* ===================== SOURIS ===================== */
+window.addEventListener('mousemove', e => mouseX = e.clientX);
+
+/* ===================== PARALLAX ===================== */
+const parallax = document.getElementById('parallax');
 window.addEventListener('mousemove', e => {
-  mouseX = e.clientX;
+  const x = (e.clientX / window.innerWidth - 0.5) * PARALLAX_STRENGTH;
+  const y = (e.clientY / window.innerHeight - 0.5) * PARALLAX_STRENGTH;
+  parallax.style.transform = `translate(${x}px, ${y}px)`;
 });
 
-/* ===================== OUI ===================== */
+/* ===================== OUI / NON ===================== */
 yesBtn.onclick = () => {
   buttons.remove();
   const msg = document.createElement('div');
@@ -165,7 +196,6 @@ yesBtn.onclick = () => {
   card.appendChild(msg);
 };
 
-/* ===================== NON ===================== */
 noBtn.onclick = () => {
   noCount++;
   if (noCount >= HOVER_NO_SPAWN_THRESHOLD && !catsSpawned) {
@@ -178,57 +208,46 @@ noBtn.onclick = () => {
 const cats = [];
 
 function spawnCats() {
-  const positions = ['20%', '50%', '80%'];
+  ['20%', '50%', '80%'].forEach((top, i) => {
+    const el = document.createElement('div');
+    el.className = 'cat';
+    el.style.top = top;
+    el.style.left = '20px';
 
-  positions.forEach((top, index) => {
-    const cat = document.createElement('div');
-    cat.className = 'cat';
-    cat.style.top = top;
-    cat.style.left = '20px';
-
-    const obj = {
-      el: cat,
+    const c = {
+      el,
       x: 20,
-      y: 0,
       vx: WALK_SPEED,
       frame: 0,
       dir: 1,
       hover: 0,
-      mobile: index === 1
+      mobile: i === 1
     };
 
-    cat.addEventListener('mouseenter', () => {
-      obj.hover++;
-      if (obj.hover >= HOVER_THRESHOLD) {
-        obj.vx = PANIC_SPEED * obj.dir;
-      }
+    el.addEventListener('mouseenter', () => {
+      c.hover++;
+      if (c.hover >= HOVER_THRESHOLD) c.vx = PANIC_SPEED * c.dir;
     });
 
-    card.appendChild(cat);
-    cats.push(obj);
+    card.appendChild(el);
+    cats.push(c);
   });
 
   requestAnimationFrame(loop);
 }
 
-/* ===================== ANIMATION ===================== */
 let last = 0;
-
 function loop(ts) {
   if (ts - last > 1000 / FPS) {
     cats.forEach(c => {
-      // Mouvement horizontal uniquement
       if (c.mobile) {
-        const dist = Math.abs(mouseX - (card.offsetLeft + c.x));
-        if (dist < FEAR_RADIUS) {
-          c.vx = (mouseX < card.offsetLeft + c.x) ? FLEE_SPEED : -FLEE_SPEED;
-        } else {
-          c.vx = c.dir * WALK_SPEED;
-        }
+        const d = Math.abs(mouseX - (card.offsetLeft + c.x));
+        c.vx = d < FEAR_RADIUS
+          ? (mouseX < card.offsetLeft + c.x ? FLEE_SPEED : -FLEE_SPEED)
+          : c.dir * WALK_SPEED;
         c.x += c.vx;
       }
 
-      // Ping-pong écran
       if (c.x < 0 || c.x > card.clientWidth - FRAME_W * CAT_SCALE) {
         c.dir *= -1;
         c.vx *= -1;
@@ -236,29 +255,57 @@ function loop(ts) {
 
       c.el.style.left = c.x + 'px';
 
-      // Animation sprite
-      c.frame += PINGPONG ? c.dir : 1;
+      c.frame += c.dir;
       if (c.frame >= TOTAL_FRAMES || c.frame < 0) c.dir *= -1;
 
       const fx = (c.frame % FRAMES_PER_ROW) * FRAME_W;
       const fy = Math.floor(c.frame / FRAMES_PER_ROW) * FRAME_H;
       c.el.style.backgroundPosition = `-${fx}px -${fy}px`;
-
-      // Orientation
       c.el.style.transform = c.vx < 0 ? 'scaleX(-1)' : 'scaleX(1)';
     });
-
     last = ts;
   }
   requestAnimationFrame(loop);
 }
 
-/* ===================== ERREUR SPRITE ===================== */
-const img = new Image();
-img.onerror = () => {
-  console.error('❌ Sprite introuvable : images/cat.png');
-};
-img.src = CAT_SRC;
+/* ===================== POUSSIÈRE LUMINEUSE ===================== */
+const canvas = document.getElementById('dust');
+const ctx = canvas.getContext('2d');
+let w, h, particles = [];
+
+function resize() {
+  w = canvas.width = window.innerWidth;
+  h = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+for (let i = 0; i < PARTICLE_COUNT; i++) {
+  particles.push({
+    x: Math.random() * w,
+    y: Math.random() * h,
+    r: Math.random() * 1.8 + 0.5,
+    a: Math.random() * Math.PI * 2
+  });
+}
+
+function dustLoop() {
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+
+  particles.forEach(p => {
+    p.y -= PARTICLE_SPEED;
+    p.x += Math.sin(p.a) * 0.2;
+    if (p.y < 0) p.y = h;
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  requestAnimationFrame(dustLoop);
+}
+dustLoop();
 </script>
 
 </body>
