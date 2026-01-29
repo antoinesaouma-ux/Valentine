@@ -6,32 +6,22 @@
   <title>Veux-tu être ma Valentine ? 💕</title>
   <style>
     :root {
-      /* 🎨 PALETTE MODERNE MAT (inspiration dribbble/behance) */
+      /* 🎨 PALETTE MODERNE MATE */
       --card-width: min(90vw, 650px);
       --card-height: min(92vh, 850px);
       
-      /* Dégradés subtils et modernes */
-      --bg-primary: #0a0e27;
-      --bg-secondary: #1a1f3a;
-      --card-bg: linear-gradient(135deg, #1e2749 0%, #2d3561 100%);
-      --card-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), 0 0 1px rgba(255,255,255,0.1);
-      
-      /* Textes */
-      --text-light: #e8eaf6;
-      --text-accent: #ffd93d;
-      --text-muted: #a5b4cb;
-      
-      /* Boutons */
-      --btn-yes-bg: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
-      --btn-yes-hover: linear-gradient(135deg, #ee5a6f 0%, #c44569 100%);
-      --btn-no-bg: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
-      --btn-no-hover: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
-      
+      --bg-dark: #0a0e27;
+      --bg-darker: #060817;
+      --card-bg: linear-gradient(145deg, #1a1f3a 0%, #0f1429 100%);
+      --card-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), 0 0 1px rgba(184, 148, 82, 0.3);
+      --text-color: #e8e6e3;
+      --accent-gold: #b89452;
+      --accent-gold-bright: #d4af37;
+      --btn-yes-bg: linear-gradient(135deg, #b89452 0%, #8b6f3e 100%);
+      --btn-yes-hover: linear-gradient(135deg, #d4af37 0%, #b89452 100%);
+      --btn-no-bg: linear-gradient(135deg, #2d3456 0%, #1a1f3a 100%);
+      --btn-no-hover: linear-gradient(135deg, #3d4566 0%, #2d3456 100%);
       --font-romantic: 'Georgia', 'Palatino', serif;
-      --font-modern: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      
-      /* Bordures subtiles */
-      --border-subtle: rgba(255, 217, 61, 0.15);
     }
 
     * {
@@ -42,7 +32,7 @@
 
     body {
       font-family: var(--font-romantic);
-      background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+      background: radial-gradient(ellipse at top, var(--bg-dark) 0%, var(--bg-darker) 100%);
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -51,35 +41,26 @@
       position: relative;
     }
 
-    /* Grain texture subtil */
+    /* ⭐ Étoiles subtiles */
     body::before {
       content: '';
       position: absolute;
       inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-      opacity: 0.03;
-      pointer-events: none;
-    }
-
-    /* Étoiles discrètes */
-    body::after {
-      content: '';
-      position: absolute;
-      inset: 0;
       background-image: 
-        radial-gradient(1px 1px at 20% 30%, white, transparent),
-        radial-gradient(1px 1px at 60% 70%, white, transparent),
-        radial-gradient(1px 1px at 50% 50%, white, transparent),
-        radial-gradient(1px 1px at 80% 10%, white, transparent),
-        radial-gradient(1px 1px at 90% 60%, white, transparent);
-      background-size: 200% 200%;
-      animation: twinkle 6s ease-in-out infinite;
+        radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.3), transparent),
+        radial-gradient(1px 1px at 60% 70%, rgba(255,255,255,0.2), transparent),
+        radial-gradient(1px 1px at 50% 50%, rgba(184,148,82,0.4), transparent),
+        radial-gradient(1px 1px at 80% 10%, rgba(255,255,255,0.3), transparent),
+        radial-gradient(1px 1px at 90% 60%, rgba(184,148,82,0.3), transparent),
+        radial-gradient(1px 1px at 33% 80%, rgba(255,255,255,0.2), transparent);
+      background-size: 300% 300%;
+      animation: subtleTwinkle 6s ease-in-out infinite;
       opacity: 0.4;
       pointer-events: none;
     }
 
-    @keyframes twinkle {
-      0%, 100% { opacity: 0.2; }
+    @keyframes subtleTwinkle {
+      0%, 100% { opacity: 0.3; }
       50% { opacity: 0.5; }
     }
 
@@ -92,17 +73,16 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between;
       padding: 2.5rem 2rem;
       text-align: center;
       position: relative;
       z-index: 10;
-      border: 1px solid var(--border-subtle);
-      backdrop-filter: blur(20px);
-      overflow-y: auto; /* ✅ Scroll si contenu dépasse */
+      border: 1px solid rgba(184, 148, 82, 0.2);
+      overflow: hidden; /* ✅ Empêche débordement */
     }
 
-    /* Bordure subtile animée */
+    /* Bordure dorée subtile */
     .card::before {
       content: '';
       position: absolute;
@@ -111,7 +91,7 @@
       padding: 1px;
       background: linear-gradient(135deg, 
         transparent 0%, 
-        rgba(255, 217, 61, 0.2) 50%, 
+        rgba(184, 148, 82, 0.3) 50%, 
         transparent 100%);
       -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
       -webkit-mask-composite: xor;
@@ -121,18 +101,19 @@
     }
 
     @keyframes borderGlow {
-      0%, 100% { opacity: 0.3; }
+      0%, 100% { opacity: 0.4; }
       50% { opacity: 0.8; }
     }
 
     .romantic-text {
-      font-size: clamp(0.9rem, 2.2vmin, 1.2rem);
+      font-size: clamp(0.95rem, 2.2vmin, 1.25rem);
       line-height: 1.7;
-      color: var(--text-light);
+      color: var(--text-color);
       font-style: italic;
-      margin-bottom: 1.5rem;
-      max-width: 90%;
-      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      margin-bottom: 1rem;
+      max-width: 100%;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+      flex-shrink: 0;
     }
 
     .romantic-text p {
@@ -141,38 +122,37 @@
 
     .romantic-text .question {
       font-weight: bold;
-      font-size: clamp(1.4rem, 3.5vmin, 2.2rem);
+      font-size: clamp(1.4rem, 3.8vmin, 2.2rem);
       font-style: normal;
       margin-top: 1.5rem;
-      color: var(--text-accent);
-      text-shadow: 0 0 20px rgba(255, 217, 61, 0.4);
-      animation: pulse 2.5s ease-in-out infinite;
+      color: var(--accent-gold-bright);
+      text-shadow: 0 0 20px rgba(184, 148, 82, 0.4);
+      animation: gentlePulse 3s ease-in-out infinite;
     }
 
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.03); }
+    @keyframes gentlePulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.03); opacity: 0.95; }
     }
 
     .buttons {
       display: flex;
-      gap: 1.5rem;
-      margin-top: 2rem;
-      flex-wrap: wrap;
-      justify-content: center;
+      gap: 2rem;
+      margin: 1.5rem 0;
+      flex-shrink: 0;
     }
 
     button {
-      padding: 1rem 2.5rem;
-      font-size: clamp(0.95rem, 2.3vmin, 1.2rem);
-      font-family: var(--font-modern);
+      padding: 1.1rem 2.8rem;
+      font-size: clamp(1rem, 2.3vmin, 1.25rem);
+      font-family: var(--font-romantic);
       font-weight: 600;
       color: white;
       border: none;
-      border-radius: 12px;
+      border-radius: 50px;
       cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
       position: relative;
       overflow: hidden;
     }
@@ -181,9 +161,9 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(135deg, transparent, rgba(255,255,255,0.15), transparent);
+      background: linear-gradient(120deg, transparent, rgba(255,255,255,0.15), transparent);
       transform: translateX(-100%);
-      transition: transform 0.5s;
+      transition: transform 0.6s;
     }
 
     button:hover::before {
@@ -191,7 +171,7 @@
     }
 
     button:focus {
-      outline: 2px solid rgba(255, 217, 61, 0.5);
+      outline: 2px solid var(--accent-gold);
       outline-offset: 3px;
     }
 
@@ -201,28 +181,33 @@
 
     #btnYes:hover {
       background: var(--btn-yes-hover);
-      transform: translateY(-2px) scale(1.05);
-      box-shadow: 0 10px 30px rgba(255, 107, 107, 0.4);
+      transform: scale(1.08) translateY(-2px);
+      box-shadow: 0 10px 30px rgba(184, 148, 82, 0.4);
     }
 
     #btnNo {
       background: var(--btn-no-bg);
+      transition: all 0.15s ease-out; /* ✅ Transition rapide pour fuite */
     }
 
     #btnNo:hover {
       background: var(--btn-no-hover);
-      transform: translateY(-1px);
+    }
+
+    #btnNo.fleeing {
+      position: fixed; /* ✅ Devient absolu pour bouger librement */
+      z-index: 9999;
     }
 
     .confirmation {
       display: none;
-      font-size: clamp(1.1rem, 2.8vmin, 1.6rem);
-      color: var(--text-accent);
+      font-size: clamp(1.2rem, 3vmin, 1.8rem);
+      color: var(--accent-gold-bright);
       font-weight: bold;
-      text-shadow: 0 0 15px rgba(255, 217, 61, 0.5);
-      animation: heartbeat 1.5s infinite;
+      text-shadow: 0 0 15px rgba(184, 148, 82, 0.5);
+      animation: heartbeat 2s infinite;
       line-height: 1.6;
-      max-width: 90%;
+      flex-shrink: 0;
     }
 
     @keyframes heartbeat {
@@ -232,22 +217,23 @@
 
     #teasingMessage {
       position: absolute;
-      top: 1rem;
+      top: 1.2rem;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(45, 53, 97, 0.8);
+      background: rgba(45, 52, 86, 0.8);
       backdrop-filter: blur(10px);
-      padding: 0.8rem 1.5rem;
+      padding: 0.9rem 1.8rem;
       border-radius: 12px;
-      font-size: clamp(0.85rem, 1.8vmin, 1rem);
-      color: var(--text-accent);
+      font-size: clamp(0.85rem, 1.9vmin, 1.05rem);
+      color: var(--accent-gold-bright);
       font-style: italic;
       display: none;
       max-width: 85%;
       text-align: center;
-      border: 1px solid var(--border-subtle);
+      border: 1px solid rgba(184, 148, 82, 0.3);
       animation: slideDown 0.4s ease-out;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      z-index: 15;
     }
 
     @keyframes slideDown {
@@ -263,34 +249,37 @@
 
     #noCounter {
       position: absolute;
-      bottom: 1rem;
-      right: 1rem;
-      background: rgba(45, 53, 97, 0.7);
+      bottom: 1.2rem;
+      right: 1.2rem;
+      background: rgba(45, 52, 86, 0.8);
       backdrop-filter: blur(10px);
       padding: 0.6rem 1rem;
       border-radius: 10px;
       font-size: 0.85rem;
-      color: var(--text-accent);
+      color: var(--accent-gold);
       display: none;
-      border: 1px solid var(--border-subtle);
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(184, 148, 82, 0.3);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     }
 
     .gif-container {
       display: none;
       margin-top: 1.5rem;
-      animation: fadeIn 0.7s ease-in;
-      max-width: 90%;
+      animation: fadeIn 0.6s ease-in;
+      max-height: 40%;
+      flex-shrink: 1;
+      overflow: hidden;
     }
 
     .gif-container img {
       max-width: 100%;
-      width: 100%;
-      max-height: 350px;
-      object-fit: contain;
+      max-height: 100%;
+      width: auto;
+      height: auto;
       border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-      border: 2px solid var(--border-subtle);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      border: 2px solid rgba(184, 148, 82, 0.3);
+      object-fit: contain;
     }
 
     @keyframes fadeIn {
@@ -310,7 +299,7 @@
       will-change: transform, left;
       backface-visibility: hidden;
       -webkit-backface-visibility: hidden;
-      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+      filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.6));
     }
 
     .cat.face-left {
@@ -319,19 +308,6 @@
 
     .cat.face-right {
       transform: scaleX(1) translateZ(0);
-    }
-
-    /* ✅ Responsive pour petits écrans */
-    @media (max-width: 640px) {
-      .card {
-        padding: 1.5rem 1rem;
-      }
-      .buttons {
-        gap: 1rem;
-      }
-      button {
-        padding: 0.9rem 2rem;
-      }
     }
   </style>
 </head>
@@ -378,20 +354,24 @@
       IDLE_ROWS: [0, 1, 2, 3],
       WALK_ROWS: [4, 5],
       
-      FPS: 6, // Chats mobiles
-      FPS_IDLE: 2, // ✅ Chats fixes (animation lente)
+      FPS: 8,
+      FPS_IDLE: 3, // ✅ FPS plus lent pour idle
       PINGPONG: false,
 
-      CAT_SCALE: 3.5, // ✅ Agrandit les chats (était 2.5)
+      CAT_SCALE: 3.5, // ✅ Chats plus gros
 
-      FEAR_RADIUS: 180,
-      FLEE_SPEED: 4.0,
-      WALK_SPEED: 1.5,
-      PANIC_SPEED: 5.0,
+      FEAR_RADIUS: 200,
+      FLEE_SPEED: 4.5,
+      WALK_SPEED: 1.8,
+      PANIC_SPEED: 5.5,
 
-      OFFSCREEN_MARGIN: 200,
+      OFFSCREEN_MARGIN: 250,
       HOVER_THRESHOLD: 3,
       NO_CLICKS_TO_SPAWN: 3,
+
+      // ✅ Fuite du bouton "Non"
+      BTN_FLEE_RADIUS: 150,
+      BTN_FLEE_SPEED: 8,
     };
 
     const TEASING_PHRASES = [
@@ -404,7 +384,7 @@
       "Tu résistes encore ? Impressionnant ! 😏",
       "Les chats sont déçus de toi... 😿",
       "C'est ton dernier mot ? 🤨",
-      "Je n'abandonnerai jamais ! 💪❤️"
+      "Bon... tu ne m'attraperas plus ! 😈" // ✅ Dernier message = fuite
     ];
 
     let cats = [];
@@ -412,6 +392,7 @@
     let animationFrameId = null;
     let noClickCount = 0;
     let catsSpawned = false;
+    let btnNoFleeing = false;
 
     const btnYes = document.getElementById('btnYes');
     const btnNo = document.getElementById('btnNo');
@@ -444,30 +425,97 @@
         if (animationFrameId) cancelAnimationFrame(animationFrameId);
         cats.forEach(cat => cat.el.remove());
         cats = [];
+        btnNoFleeing = false;
       });
 
-      btnNo.addEventListener('click', () => {
-        noClickCount++;
-        
-        const phraseIndex = Math.min(noClickCount - 1, TEASING_PHRASES.length - 1);
-        teasingMessage.textContent = TEASING_PHRASES[phraseIndex];
-        teasingMessage.style.display = 'block';
-        
-        noCounter.textContent = `"Non" × ${noClickCount}`;
-        noCounter.style.display = 'block';
-
-        if (noClickCount >= CONFIG.NO_CLICKS_TO_SPAWN && !catsSpawned) {
-          catsSpawned = true;
-          console.log(`🐱 Spawn des chats après ${CONFIG.NO_CLICKS_TO_SPAWN} clics !`);
-          spawnCats();
-          startAnimation();
-        }
-      });
+      btnNo.addEventListener('click', handleNoClick);
 
       document.addEventListener('mousemove', (e) => {
         mouseX = e.clientX;
         mouseY = e.clientY;
       });
+
+      startFleeingLoop(); // ✅ Boucle pour faire fuir le bouton
+    }
+
+    function handleNoClick() {
+      noClickCount++;
+      
+      const phraseIndex = Math.min(noClickCount - 1, TEASING_PHRASES.length - 1);
+      teasingMessage.textContent = TEASING_PHRASES[phraseIndex];
+      teasingMessage.style.display = 'block';
+      
+      noCounter.textContent = `"Non" × ${noClickCount}`;
+      noCounter.style.display = 'block';
+
+      if (noClickCount >= CONFIG.NO_CLICKS_TO_SPAWN && !catsSpawned) {
+        catsSpawned = true;
+        console.log(`🐱 Spawn des chats après ${CONFIG.NO_CLICKS_TO_SPAWN} clics !`);
+        spawnCats();
+        startAnimation();
+      }
+
+      // ✅ Au dernier message : bouton fuit
+      if (noClickCount >= TEASING_PHRASES.length) {
+        activateFleeingButton();
+      }
+    }
+
+    function activateFleeingButton() {
+      btnNoFleeing = true;
+      btnNo.classList.add('fleeing');
+      btnNo.style.position = 'fixed';
+      btnNo.style.zIndex = '9999';
+      
+      // Position initiale aléatoire
+      const rect = btnNo.getBoundingClientRect();
+      btnNo.style.left = `${rect.left}px`;
+      btnNo.style.top = `${rect.top}px`;
+      btnNo.style.transform = 'none';
+      
+      console.log('🏃 Bouton "Non" en mode fuite !');
+    }
+
+    function startFleeingLoop() {
+      function loop() {
+        if (btnNoFleeing) {
+          const rect = btnNo.getBoundingClientRect();
+          const btnCenterX = rect.left + rect.width / 2;
+          const btnCenterY = rect.top + rect.height / 2;
+          
+          const distX = mouseX - btnCenterX;
+          const distY = mouseY - btnCenterY;
+          const dist = Math.sqrt(distX * distX + distY * distY);
+          
+          if (dist < CONFIG.BTN_FLEE_RADIUS) {
+            // Fuit dans la direction opposée
+            const angle = Math.atan2(distY, distX);
+            const fleeX = -Math.cos(angle) * CONFIG.BTN_FLEE_SPEED;
+            const fleeY = -Math.sin(angle) * CONFIG.BTN_FLEE_SPEED;
+            
+            let newX = rect.left + fleeX;
+            let newY = rect.top + fleeY;
+            
+            // Contraintes écran
+            const maxX = window.innerWidth - rect.width;
+            const maxY = window.innerHeight - rect.height;
+            
+            newX = Math.max(0, Math.min(newX, maxX));
+            newY = Math.max(0, Math.min(newY, maxY));
+            
+            // Téléportation si coincé
+            if ((newX === 0 || newX === maxX) && (newY === 0 || newY === maxY)) {
+              newX = Math.random() * maxX;
+              newY = Math.random() * maxY;
+            }
+            
+            btnNo.style.left = `${newX}px`;
+            btnNo.style.top = `${newY}px`;
+          }
+        }
+        requestAnimationFrame(loop);
+      }
+      loop();
     }
 
     function spawnCats() {
@@ -541,8 +589,8 @@
     }
 
     function startAnimation() {
-      const frameDelayMobile = 1000 / CONFIG.FPS;
-      const frameDelayIdle = 1000 / CONFIG.FPS_IDLE; // ✅ Plus lent pour fixes
+      const frameDelay = 1000 / CONFIG.FPS;
+      const idleFrameDelay = 1000 / CONFIG.FPS_IDLE; // ✅ Idle plus lent
       let lastTime = performance.now();
 
       function loop(currentTime) {
@@ -552,10 +600,10 @@
           if (cat.markedForRemoval) return;
 
           if (cat.type === 'fixed') {
-            // ✅ Chats fixes : animation LENTE (idle breathing)
+            // ✅ Animation idle douce (respiration)
             cat.frameTimer += deltaTime;
-            if (cat.frameTimer >= frameDelayIdle) {
-              cat.frameTimer -= frameDelayIdle;
+            if (cat.frameTimer >= idleFrameDelay) {
+              cat.frameTimer -= idleFrameDelay;
               cat.frame = (cat.frame + 1) % 4; // Seulement 4 premières frames
               applyFrame(cat);
             }
@@ -567,13 +615,6 @@
               cat.el.remove();
               console.log('🐱 Chat supprimé');
               return;
-            }
-            // Animation pendant la fuite
-            cat.frameTimer += deltaTime;
-            if (cat.frameTimer >= frameDelayMobile) {
-              cat.frameTimer -= frameDelayMobile;
-              cat.frame = (cat.frame + 1) % CONFIG.FRAMES_PER_ROW;
-              applyFrame(cat);
             }
           } else {
             const distX = Math.abs(mouseX - cat.x);
@@ -598,16 +639,19 @@
                 setFacing(cat);
               }
             }
-            // Animation normale pour mobiles
+          }
+
+          cat.el.style.left = `${cat.x}px`;
+
+          // Animation normale pour mobiles
+          if (cat.type === 'mobile') {
             cat.frameTimer += deltaTime;
-            if (cat.frameTimer >= frameDelayMobile) {
-              cat.frameTimer -= frameDelayMobile;
+            if (cat.frameTimer >= frameDelay) {
+              cat.frameTimer -= frameDelay;
               cat.frame = (cat.frame + 1) % CONFIG.FRAMES_PER_ROW;
               applyFrame(cat);
             }
           }
-
-          cat.el.style.left = `${cat.x}px`;
         });
 
         cats = cats.filter(c => !c.markedForRemoval);
