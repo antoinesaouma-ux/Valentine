@@ -260,6 +260,7 @@
       animation: heartbeat 2s infinite;
       line-height: 1.6;
       flex-shrink: 0;
+      text-align: center;
     }
 
     @keyframes heartbeat {
@@ -314,19 +315,19 @@
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     }
 
-    /* ✅ GIF VISIBLE EN ENTIER */
-    .gif-container {
-      display: none;
-      margin-top: 1.5rem auto 0; /* ✅ "auto" centre horizontalement */
-      animation: fadeIn 0.6s ease-in;
-      width: 100%;
-      max-width: 220px; /* ✅ Largeur max */
-      flex-shrink: 1;
-      border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-      border: 2px solid rgba(184, 148, 82, 0.3);
-      overflow: hidden;
-    }
+/* ✅ GIF CENTRÉ ET RÉDUIT */
+.gif-container {
+  display: none;
+  margin: 1.5rem auto 0; /* ✅ SYNTAXE CORRECTE */
+  animation: fadeIn 0.6s ease-in;
+  width: 100%;
+  max-width: 320px; /* ✅ Un peu plus grand */
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  border: 2px solid rgba(184, 148, 82, 0.3);
+  overflow: hidden;
+}
+
 
     .gif-container img {
       width: 100%;
@@ -504,15 +505,14 @@
         alert(`⚠️ Place ton fichier cat.png dans le dossier image/`);
       };
 
-      btnYes.addEventListener('click', () => {
-        buttons.style.display = 'none';
-        confirmation.style.display = 'block';
-        noCounter.style.display = 'none';
-        teasingMessage.style.display = 'none';
-        
-        setTimeout(() => {
-          document.getElementById('gifContainer').style.display = 'block';
-        }, 500);
+ btnYes.addEventListener('click', () => {
+  buttons.style.display = 'none';
+  confirmation.style.display = 'block';
+  noCounter.style.display = 'none';
+  teasingMessage.style.display = 'none';
+  
+  document.getElementById('gifContainer').style.display = 'block'; // ✅ IMMÉDIAT
+
         
         if (animationFrameId) cancelAnimationFrame(animationFrameId);
         cats.forEach(cat => cat.el.remove());
