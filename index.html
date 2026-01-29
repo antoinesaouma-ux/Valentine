@@ -8,25 +8,24 @@
     ╔═══════════════════════════════════════════════════════════════════════════╗
     ║  CARTE INTERACTIVE "VALENTINE" AVEC CHATS ANIMÉS                          ║
     ╠═══════════════════════════════════════════════════════════════════════════╣
-    ║  COMPORTEMENTS PRINCIPAUX :                                               ║
-    ║  • Carte carrée centrée avec 2 lignes romantiques inspirées de Cyrano     ║
-    ║  • Boutons Oui/Non : "Oui" → confirmation ; "Non" → compteur              ║
-    ║  • Au 3ᵉ clic sur "Non" : spawn de chats animés par sprite-sheet         ║
-    ║  • Chats : animation ping-pong, fuite de la souris (axe X uniquement)     ║
-    ║  • Après 3 survols d'un chat : il part hors écran en marchant             ║
+    ║  SPRITE-SHEET : cat.png (8×8 grid, 64 frames total)                      ║
+    ║  • Lignes 1-4 : animations immobiles (idle)                               ║
+    ║  • Lignes 5-6 : animations de MARCHE (utilisées pour chats mobiles)      ║
+    ║  • Lignes 7-8 : autres animations immobiles                               ║
     ╠═══════════════════════════════════════════════════════════════════════════╣
-    ║  MODIFICATIONS RAPIDES :                                                  ║
-    ║  → Section CONFIG (ligne ~80) : chemins, dimensions sprite, vitesses      ║
-    ║  → Section CSS :root (ligne ~40) : couleurs, tailles, échelle des chats   ║
-    ║  → Chemin sprite par défaut : images/cat.png                              ║
+    ║  COMPORTEMENT :                                                           ║
+    ║  • Au 3ᵉ clic sur "Non" → spawn des chats                                ║
+    ║  • Chats mobiles utilisent lignes 5-6 (marche)                            ║
+    ║  • Chats fixes utilisent lignes 1-4 (idle)                                ║
+    ║  • Fuite souris (axe X uniquement)                                        ║
     ╚═══════════════════════════════════════════════════════════════════════════╝
   -->
   <style>
     /* ========================================================================
-       VARIABLES CSS GLOBALES (modifiables facilement)
+       VARIABLES CSS GLOBALES
        ======================================================================== */
     :root {
-      --card-size: min(90vmin, 600px); /* Carte carrée responsive */
+      --card-size: min(90vmin, 600px);
       --card-bg: linear-gradient(135deg, #ffeef8 0%, #ffe0f0 100%);
       --card-shadow: 0 20px 60px rgba(255, 105, 180, 0.3);
       --text-color: #d63384;
@@ -37,7 +36,6 @@
       --font-romantic: 'Georgia', 'Palatino', serif;
     }
 
-    /* Reset & Body */
     * {
       margin: 0;
       padding: 0;
@@ -51,12 +49,12 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      overflow: hidden; /* Empêche scroll lors du mouvement des chats */
+      overflow: hidden;
       position: relative;
     }
 
     /* ========================================================================
-       CARTE CARRÉE CENTRALE
+       CARTE CARRÉE
        ======================================================================== */
     .card {
       width: var(--card-size);
@@ -71,11 +69,10 @@
       padding: 3rem;
       text-align: center;
       position: relative;
-      z-index: 10; /* Au-dessus des chats */
+      z-index: 10;
       border: 3px solid rgba(255, 182, 193, 0.6);
     }
 
-    /* Texte romantique inspiré de Cyrano */
     .romantic-text {
       font-size: clamp(1rem, 2.5vmin, 1.4rem);
       line-height: 1.6;
@@ -98,7 +95,7 @@
     }
 
     /* ========================================================================
-       BOUTONS OUI / NON
+       BOUTONS
        ======================================================================== */
     .buttons {
       display: flex;
@@ -142,7 +139,6 @@
       transform: scale(1.05);
     }
 
-    /* Message de confirmation (état "Oui" cliqué) */
     .confirmation {
       display: none;
       font-size: clamp(1.5rem, 4vmin, 2.5rem);
@@ -156,7 +152,6 @@
       50% { transform: scale(1.1); }
     }
 
-    /* Compteur de clics "Non" (facultatif visuel) */
     #noCounter {
       position: absolute;
       top: 1rem;
@@ -166,27 +161,24 @@
       border-radius: 10px;
       font-size: 0.9rem;
       color: var(--text-color);
-      display: none; /* Devient visible après 1er clic "Non" */
+      display: none;
     }
 
     /* ========================================================================
-       CHATS ANIMÉS (sprite-sheet)
+       CHATS (sprite-sheet)
        ======================================================================== */
     .cat {
       position: fixed;
-      /* Dimensions calculées dynamiquement via CAT_SCALE × FRAME_W/H */
-      width: calc(64px * 1.5); /* Valeur par défaut, sera mise à jour par JS */
-      height: calc(64px * 1.5);
-      background-image: url('images/cat.png'); /* ← CHEMIN PAR DÉFAUT */
+      background-image: url('image/cat.png'); /* ← Chemin corrigé */
       background-repeat: no-repeat;
-      background-size: calc(8 * 64px * 1.5) auto; /* 8 frames/row × FRAME_W × scale */
-      image-rendering: pixelated; /* Style pixel-art si approprié */
+      image-rendering: pixelated;
+      image-rendering: -moz-crisp-edges;
+      image-rendering: crisp-edges;
       pointer-events: auto;
-      z-index: 5; /* Sous la carte */
-      transition: none; /* Pas de transition CSS, animé via JS */
+      z-index: 5;
+      transition: none;
     }
 
-    /* Flip horizontal pour direction gauche */
     .cat.face-left {
       transform: scaleX(-1);
     }
@@ -198,9 +190,6 @@
 </head>
 <body>
 
-  <!-- ========================================================================
-       CARTE PRINCIPALE
-       ======================================================================== -->
   <div class="card" id="card">
     <div class="romantic-text">
       <p>
@@ -224,101 +213,97 @@
     <div id="noCounter"></div>
   </div>
 
-  <!-- ========================================================================
-       SCRIPT PRINCIPAL
-       ======================================================================== -->
   <script>
     'use strict';
 
     /* ========================================================================
-       █████████████████████████████████████████████████████████████████████
-       ███                      SECTION CONFIG                            ███
-       ███  → MODIFIE ICI tous les paramètres (sprite, tailles, vitesses) ███
-       █████████████████████████████████████████████████████████████████████
+       ███████████████████████████████████████████████████████████████████████
+       ███                    CONFIGURATION SPRITE                        ███
+       ███  → Adapté pour cat.png (8×8 grid, lignes 5-6 = marche)         ███
+       ███████████████████████████████████████████████████████████████████████
        ======================================================================== */
 
     const CONFIG = {
       // ──────────────────────────────────────────────────────────────────────
-      // SPRITE-SHEET (chemin et dimensions)
+      // SPRITE-SHEET (analysée depuis ton image)
       // ──────────────────────────────────────────────────────────────────────
-      CAT_SRC: 'images/cat.png',        // ← Chemin vers la sprite-sheet
-      FRAME_W: 64,                      // Largeur d'une frame (px)
-      FRAME_H: 64,                      // Hauteur d'une frame (px)
-      FRAMES_PER_ROW: 8,                // Nombre de frames par ligne
-      TOTAL_FRAMES: 16,                 // Nombre total de frames dans la sheet
-      FPS: 10,                          // Images par seconde de l'animation
-      PINGPONG: true,                   // true = aller/retour ; false = boucle simple
+      CAT_SRC: 'image/cat.png',         // ← Chemin corrigé (ton dossier)
+      FRAME_W: 32,                      // Largeur frame (mesurée sur ton image)
+      FRAME_H: 32,                      // Hauteur frame
+      FRAMES_PER_ROW: 8,                // 8 colonnes
+      TOTAL_ROWS: 8,                    // 8 lignes
 
       // ──────────────────────────────────────────────────────────────────────
-      // AFFICHAGE & ÉCHELLE
+      // LIGNES UTILISÉES (rows 0-indexed)
       // ──────────────────────────────────────────────────────────────────────
-      CAT_SCALE: 1.5,                   // Multiplie FRAME_W/H pour taille affichée
+      IDLE_ROWS: [0, 1, 2, 3],          // Lignes 1-4 : animations immobiles
+      WALK_ROWS: [4, 5],                // Lignes 5-6 : animations de MARCHE ✅
+      
+      // ──────────────────────────────────────────────────────────────────────
+      // ANIMATION
+      // ──────────────────────────────────────────────────────────────────────
+      FPS: 8,                           // Vitesse animation
+      PINGPONG: true,                   // Aller-retour
 
       // ──────────────────────────────────────────────────────────────────────
-      // COMPORTEMENT : FUITE DE LA SOURIS
+      // AFFICHAGE
       // ──────────────────────────────────────────────────────────────────────
-      FEAR_RADIUS: 160,                 // Distance (px X) à partir de laquelle le chat fuit
-      FLEE_SPEED: 3.0,                  // Vitesse de fuite (px/frame)
-      WALK_SPEED: 1.1,                  // Vitesse de marche normale (ping-pong)
-      PANIC_SPEED: 4.0,                 // Vitesse max en panique (si besoin)
+      CAT_SCALE: 2.5,                   // Agrandissement (32px × 2.5 = 80px)
 
       // ──────────────────────────────────────────────────────────────────────
-      // SORTIE D'ÉCRAN & RESPAWN
+      // COMPORTEMENT
       // ──────────────────────────────────────────────────────────────────────
-      OFFSCREEN_MARGIN: 200,            // Marge hors écran avant suppression
-      HOVER_THRESHOLD: 3,               // Nb de survols avant qu'un chat "parte"
+      FEAR_RADIUS: 180,                 // Distance fuite souris (px X)
+      FLEE_SPEED: 4.0,                  // Vitesse fuite
+      WALK_SPEED: 1.5,                  // Vitesse marche normale
+      PANIC_SPEED: 5.0,                 // Vitesse sortie d'écran
 
-      // ──────────────────────────────────────────────────────────────────────
-      // DÉCLENCHEUR : SPAWN DES CHATS APRÈS 3 CLICS SUR "NON"
-      // ──────────────────────────────────────────────────────────────────────
-      NO_CLICKS_TO_SPAWN: 3,            // Nb de clics sur "Non" avant spawn
+      OFFSCREEN_MARGIN: 200,
+      HOVER_THRESHOLD: 3,               // Survols avant départ
+      NO_CLICKS_TO_SPAWN: 3,            // ← 3 clics sur "Non" avant spawn ✅
     };
 
     /* ========================================================================
        VARIABLES GLOBALES
        ======================================================================== */
-    let cats = [];                      // Tableau des chats spawned
-    let mouseX = -9999, mouseY = -9999; // Position souris (initialisée hors écran)
-    let animationFrameId = null;        // ID de requestAnimationFrame
-    let noClickCount = 0;               // Compteur clics sur "Non"
-    let catsSpawned = false;            // Flag : les chats sont-ils apparus ?
+    let cats = [];
+    let mouseX = -9999, mouseY = -9999;
+    let animationFrameId = null;
+    let noClickCount = 0;
+    let catsSpawned = false;
 
-    // Références DOM
     const btnYes = document.getElementById('btnYes');
     const btnNo = document.getElementById('btnNo');
     const buttons = document.getElementById('buttons');
     const confirmation = document.getElementById('confirmation');
     const noCounter = document.getElementById('noCounter');
-    const card = document.getElementById('card');
 
     /* ========================================================================
-       INITIALISATION : ÉCOUTEURS & SPRITE PRELOAD
+       INITIALISATION
        ======================================================================== */
     function init() {
-      // Preload sprite-sheet
+      // Preload sprite
       const img = new Image();
       img.src = CONFIG.CAT_SRC;
       img.onload = () => {
-        console.log(`✅ Sprite-sheet chargée : ${CONFIG.CAT_SRC}`);
+        console.log(`✅ Sprite chargée : ${CONFIG.CAT_SRC}`);
       };
       img.onerror = () => {
-        console.error(`❌ ERREUR : impossible de charger ${CONFIG.CAT_SRC}`);
-        alert(`⚠️ Sprite manquante !\nPlace ton fichier dans : ${CONFIG.CAT_SRC}`);
+        console.error(`❌ ERREUR : sprite introuvable → ${CONFIG.CAT_SRC}`);
+        alert(`⚠️ Place ton fichier cat.png dans le dossier image/`);
       };
 
-      // Bouton "Oui" : afficher confirmation et stopper interactions
+      // Bouton "Oui"
       btnYes.addEventListener('click', () => {
         buttons.style.display = 'none';
         confirmation.style.display = 'block';
         noCounter.style.display = 'none';
-        // Optionnel : arrêter animation des chats
         if (animationFrameId) cancelAnimationFrame(animationFrameId);
-        // Retirer les chats du DOM
         cats.forEach(cat => cat.el.remove());
         cats = [];
       });
 
-      // Bouton "Non" : incrémenter compteur, spawn au 3ᵉ clic
+      // Bouton "Non" : spawn au 3ᵉ clic ✅
       btnNo.addEventListener('click', () => {
         noClickCount++;
         noCounter.textContent = `"Non" cliqué : ${noClickCount} fois`;
@@ -326,13 +311,13 @@
 
         if (noClickCount >= CONFIG.NO_CLICKS_TO_SPAWN && !catsSpawned) {
           catsSpawned = true;
-          console.log(`🐱 Spawn des chats après ${CONFIG.NO_CLICKS_TO_SPAWN} clics "Non"`);
+          console.log(`🐱 Spawn après ${CONFIG.NO_CLICKS_TO_SPAWN} clics !`);
           spawnCats();
           startAnimation();
         }
       });
 
-      // Tracking souris (global)
+      // Tracking souris
       document.addEventListener('mousemove', (e) => {
         mouseX = e.clientX;
         mouseY = e.clientY;
@@ -340,75 +325,76 @@
     }
 
     /* ========================================================================
-       SPAWN DES CHATS (3 lignes : haut, milieu, bas)
+       SPAWN DES CHATS
        ======================================================================== */
     function spawnCats() {
       const screenW = window.innerWidth;
       const screenH = window.innerHeight;
-      const catW = CONFIG.FRAME_W * CONFIG.CAT_SCALE;
-      const catH = CONFIG.FRAME_H * CONFIG.CAT_SCALE;
 
-      // Lignes Y fixes (haut = 20%, milieu = 50%, bas = 80%)
       const yTop = screenH * 0.2;
       const yMid = screenH * 0.5;
       const yBot = screenH * 0.8;
 
       // ──────────────────────────────────────────────────────────────────────
-      // CHATS FIXES (haut et bas) : ne bougent pas, ne fuient pas
+      // CHATS FIXES (haut/bas) : utilisent lignes IDLE (1-4)
       // ──────────────────────────────────────────────────────────────────────
-      cats.push(createCat(screenW * 0.15, yTop, 'fixed', 'right'));
-      cats.push(createCat(screenW * 0.85, yTop, 'fixed', 'left'));
-      cats.push(createCat(screenW * 0.25, yBot, 'fixed', 'right'));
-      cats.push(createCat(screenW * 0.75, yBot, 'fixed', 'left'));
+      cats.push(createCat(screenW * 0.15, yTop, 'fixed', 'right', 0)); // Row 1
+      cats.push(createCat(screenW * 0.85, yTop, 'fixed', 'left', 1));  // Row 2
+      cats.push(createCat(screenW * 0.25, yBot, 'fixed', 'right', 2)); // Row 3
+      cats.push(createCat(screenW * 0.75, yBot, 'fixed', 'left', 3));  // Row 4
 
       // ──────────────────────────────────────────────────────────────────────
-      // CHATS MOBILES (milieu) : ping-pong horizontal, fuient la souris
+      // CHATS MOBILES (milieu) : utilisent lignes WALK (5-6) ✅
       // ──────────────────────────────────────────────────────────────────────
-      cats.push(createCat(screenW * 0.3, yMid, 'mobile', 'right'));
-      cats.push(createCat(screenW * 0.7, yMid, 'mobile', 'left'));
+      cats.push(createCat(screenW * 0.3, yMid, 'mobile', 'right', 4)); // Row 5
+      cats.push(createCat(screenW * 0.7, yMid, 'mobile', 'left', 5));  // Row 6
     }
 
     /* ========================================================================
-       CRÉATION D'UN CHAT (objet + élément DOM)
+       CRÉATION D'UN CHAT
        ======================================================================== */
-    function createCat(x, y, type, facing) {
+    function createCat(x, y, type, facing, rowIndex) {
       const el = document.createElement('div');
       el.className = 'cat';
-      el.style.width = `${CONFIG.FRAME_W * CONFIG.CAT_SCALE}px`;
-      el.style.height = `${CONFIG.FRAME_H * CONFIG.CAT_SCALE}px`;
-      el.style.backgroundSize = `${CONFIG.FRAMES_PER_ROW * CONFIG.FRAME_W * CONFIG.CAT_SCALE}px auto`;
+      
+      const displayW = CONFIG.FRAME_W * CONFIG.CAT_SCALE;
+      const displayH = CONFIG.FRAME_H * CONFIG.CAT_SCALE;
+      
+      el.style.width = `${displayW}px`;
+      el.style.height = `${displayH}px`;
+      el.style.backgroundSize = `${CONFIG.FRAMES_PER_ROW * displayW}px auto`;
       el.style.left = `${x}px`;
       el.style.top = `${y}px`;
       document.body.appendChild(el);
 
       const cat = {
-        el,                         // Element DOM
-        x, y,                       // Position
-        vx: 0,                      // Vélocité X (mouvement)
-        type,                       // 'fixed' ou 'mobile'
-        facing,                     // 'left' ou 'right'
-        frame: 0,                   // Frame actuelle (0..TOTAL_FRAMES-1)
-        frameTimer: 0,              // Timer pour FPS
-        direction: 1,               // +1 (forward) ou -1 (backward) pour ping-pong
-        hoverCount: 0,              // Nb de survols (mouseenter)
-        leaving: false,             // true = en train de partir hors écran
-        markedForRemoval: false,    // true = à supprimer du tableau
+        el,
+        x, y,
+        vx: 0,
+        type,
+        facing,
+        rowIndex,                       // Ligne sprite (0-7)
+        frame: 0,                       // Colonne actuelle (0-7)
+        frameTimer: 0,
+        direction: 1,                   // +1 forward, -1 backward
+        hoverCount: 0,
+        leaving: false,
+        markedForRemoval: false,
       };
 
-      // Initialiser direction pour mobiles
+      // Direction initiale pour mobiles
       if (type === 'mobile') {
         cat.vx = (facing === 'right') ? CONFIG.WALK_SPEED : -CONFIG.WALK_SPEED;
       }
 
-      // Événement mouseenter : incrémenter hoverCount
+      // Mouseenter : incrémenter hoverCount
       el.addEventListener('mouseenter', () => {
         if (cat.type === 'mobile' && !cat.leaving) {
           cat.hoverCount++;
-          console.log(`🐱 Chat survolé ${cat.hoverCount}/${CONFIG.HOVER_THRESHOLD}`);
+          console.log(`🐱 Survol ${cat.hoverCount}/${CONFIG.HOVER_THRESHOLD}`);
           if (cat.hoverCount >= CONFIG.HOVER_THRESHOLD) {
             cat.leaving = true;
-            console.log('🐱 Chat part hors écran !');
-            // Choisir direction de sortie (vers bord le plus proche)
+            console.log('🐱 Chat part !');
             cat.vx = (cat.x < window.innerWidth / 2) ? -CONFIG.PANIC_SPEED : CONFIG.PANIC_SPEED;
             cat.facing = (cat.vx > 0) ? 'right' : 'left';
             setFacing(cat);
@@ -423,43 +409,41 @@
     }
 
     /* ========================================================================
-       ANIMATION PRINCIPALE (requestAnimationFrame)
+       ANIMATION PRINCIPALE
        ======================================================================== */
     function startAnimation() {
       const frameDelay = 1000 / CONFIG.FPS;
 
-      function loop(timestamp) {
+      function loop() {
         cats.forEach(cat => {
           if (cat.markedForRemoval) return;
 
           // ────────────────────────────────────────────────────────────────
-          // 1) COMPORTEMENT : fixed vs mobile vs leaving
+          // COMPORTEMENT
           // ────────────────────────────────────────────────────────────────
           if (cat.type === 'fixed') {
-            // Aucun mouvement, juste animation sur place
+            // Immobile
           } else if (cat.leaving) {
-            // Part hors écran en ligne droite
             cat.x += cat.vx;
-            // Vérifier si hors écran
             const margin = CONFIG.OFFSCREEN_MARGIN;
             if (cat.x < -margin || cat.x > window.innerWidth + margin) {
               cat.markedForRemoval = true;
               cat.el.remove();
-              console.log('🐱 Chat supprimé (hors écran)');
+              console.log('🐱 Chat supprimé');
               return;
             }
           } else {
-            // Mobile : fuite souris OU ping-pong
+            // Mobile : fuite ou ping-pong
             const distX = Math.abs(mouseX - cat.x);
             if (distX < CONFIG.FEAR_RADIUS) {
-              // FUITE : s'éloigner de la souris (axe X uniquement)
+              // FUITE
               const flee = (cat.x < mouseX) ? -CONFIG.FLEE_SPEED : CONFIG.FLEE_SPEED;
               cat.vx = flee;
               cat.facing = (flee > 0) ? 'right' : 'left';
               setFacing(cat);
               cat.x += cat.vx;
             } else {
-              // PING-PONG : marche normale avec rebonds
+              // PING-PONG
               cat.x += cat.vx;
               const catW = CONFIG.FRAME_W * CONFIG.CAT_SCALE;
               if (cat.x <= 0) {
@@ -477,36 +461,34 @@
           }
 
           // ────────────────────────────────────────────────────────────────
-          // 2) MISE À JOUR POSITION DOM
+          // POSITION
           // ────────────────────────────────────────────────────────────────
           cat.el.style.left = `${cat.x}px`;
           cat.el.style.top = `${cat.y}px`;
 
           // ────────────────────────────────────────────────────────────────
-          // 3) ANIMATION SPRITE (ping-pong frames)
+          // ANIMATION SPRITE (ping-pong sur les 8 frames de la row)
           // ────────────────────────────────────────────────────────────────
-          cat.frameTimer += 16; // ~16ms par frame (60fps)
+          cat.frameTimer += 16;
           if (cat.frameTimer >= frameDelay) {
             cat.frameTimer = 0;
             if (CONFIG.PINGPONG) {
               cat.frame += cat.direction;
-              if (cat.frame >= CONFIG.TOTAL_FRAMES - 1) {
-                cat.frame = CONFIG.TOTAL_FRAMES - 1;
-                cat.direction = -1; // Retour arrière
+              if (cat.frame >= CONFIG.FRAMES_PER_ROW - 1) {
+                cat.frame = CONFIG.FRAMES_PER_ROW - 1;
+                cat.direction = -1;
               } else if (cat.frame <= 0) {
                 cat.frame = 0;
-                cat.direction = 1; // Repartir en avant
+                cat.direction = 1;
               }
             } else {
-              cat.frame = (cat.frame + 1) % CONFIG.TOTAL_FRAMES;
+              cat.frame = (cat.frame + 1) % CONFIG.FRAMES_PER_ROW;
             }
             applyFrame(cat);
           }
         });
 
-        // Nettoyer les chats marqués pour suppression
         cats = cats.filter(c => !c.markedForRemoval);
-
         animationFrameId = requestAnimationFrame(loop);
       }
 
@@ -514,19 +496,18 @@
     }
 
     /* ========================================================================
-       HELPERS : GESTION SPRITE & FACING
+       HELPERS
        ======================================================================== */
-
-    // Appliquer la frame actuelle au background-position
     function applyFrame(cat) {
-      const row = Math.floor(cat.frame / CONFIG.FRAMES_PER_ROW);
-      const col = cat.frame % CONFIG.FRAMES_PER_ROW;
-      const offsetX = -col * CONFIG.FRAME_W * CONFIG.CAT_SCALE;
-      const offsetY = -row * CONFIG.FRAME_H * CONFIG.CAT_SCALE;
+      const displayW = CONFIG.FRAME_W * CONFIG.CAT_SCALE;
+      const displayH = CONFIG.FRAME_H * CONFIG.CAT_SCALE;
+      
+      const offsetX = -cat.frame * displayW;
+      const offsetY = -cat.rowIndex * displayH;
+      
       cat.el.style.backgroundPosition = `${offsetX}px ${offsetY}px`;
     }
 
-    // Appliquer la classe CSS pour flip horizontal (facing)
     function setFacing(cat) {
       if (cat.facing === 'left') {
         cat.el.classList.add('face-left');
