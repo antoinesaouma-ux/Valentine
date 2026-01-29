@@ -4,26 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Veux-tu être ma Valentine ? 💕</title>
-  <!--
-    ╔═══════════════════════════════════════════════════════════════════════════╗
-    ║  CARTE INTERACTIVE "VALENTINE" AVEC CHATS ANIMÉS                          ║
-    ╠═══════════════════════════════════════════════════════════════════════════╣
-    ║  SPRITE-SHEET : cat.png (8×8 grid, 64 frames total)                      ║
-    ║  • Lignes 1-4 : animations immobiles (idle)                               ║
-    ║  • Lignes 5-6 : animations de MARCHE (utilisées pour chats mobiles)      ║
-    ║  • Lignes 7-8 : autres animations immobiles                               ║
-    ╠═══════════════════════════════════════════════════════════════════════════╣
-    ║  COMPORTEMENT :                                                           ║
-    ║  • Au 3ᵉ clic sur "Non" → spawn des chats                                ║
-    ║  • Chats mobiles utilisent lignes 5-6 (marche)                            ║
-    ║  • Chats fixes utilisent lignes 1-4 (idle)                                ║
-    ║  • Fuite souris (axe X uniquement)                                        ║
-    ╚═══════════════════════════════════════════════════════════════════════════╝
-  -->
   <style>
-    /* ========================================================================
-       VARIABLES CSS GLOBALES
-       ======================================================================== */
     :root {
       --card-size: min(90vmin, 600px);
       --card-bg: linear-gradient(135deg, #ffeef8 0%, #ffe0f0 100%);
@@ -53,9 +34,6 @@
       position: relative;
     }
 
-    /* ========================================================================
-       CARTE CARRÉE
-       ======================================================================== */
     .card {
       width: var(--card-size);
       height: var(--card-size);
@@ -94,9 +72,6 @@
       color: #c2185b;
     }
 
-    /* ========================================================================
-       BOUTONS
-       ======================================================================== */
     .buttons {
       display: flex;
       gap: 2rem;
@@ -165,11 +140,32 @@
     }
 
     /* ========================================================================
-       CHATS (sprite-sheet)
+       GIF DE CONFIRMATION ✅
+       ======================================================================== */
+    .gif-container {
+      display: none;
+      margin-top: 2rem;
+      animation: fadeIn 0.5s ease-in;
+    }
+
+    .gif-container img {
+      max-width: 300px;
+      width: 80%;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* ========================================================================
+       CHATS
        ======================================================================== */
     .cat {
       position: fixed;
-      background-image: url('image/cat.png'); /* ← Chemin corrigé */
+      background-image: url('image/cat.png');
       background-repeat: no-repeat;
       image-rendering: pixelated;
       image-rendering: -moz-crisp-edges;
@@ -208,6 +204,10 @@
 
     <div class="confirmation" id="confirmation">
       Oui ! ❤️✨
+      <!-- ✅ GIF ajouté ici -->
+      <div class="gif-container" id="gifContainer">
+        <img src="image/love-mochi.gif" alt="Love GIF" />
+      </div>
     </div>
 
     <div id="noCounter"></div>
@@ -217,50 +217,31 @@
     'use strict';
 
     /* ========================================================================
-       ███████████████████████████████████████████████████████████████████████
-       ███                    CONFIGURATION SPRITE                        ███
-       ███  → Adapté pour cat.png (8×8 grid, lignes 5-6 = marche)         ███
-       ███████████████████████████████████████████████████████████████████████
+       CONFIGURATION
        ======================================================================== */
-
     const CONFIG = {
-      // ──────────────────────────────────────────────────────────────────────
-      // SPRITE-SHEET (analysée depuis ton image)
-      // ──────────────────────────────────────────────────────────────────────
-      CAT_SRC: 'image/cat.png',         // ← Chemin corrigé (ton dossier)
-      FRAME_W: 32,                      // Largeur frame (mesurée sur ton image)
-      FRAME_H: 32,                      // Hauteur frame
-      FRAMES_PER_ROW: 8,                // 8 colonnes
-      TOTAL_ROWS: 8,                    // 8 lignes
+      CAT_SRC: 'image/cat.png',
+      FRAME_W: 32,
+      FRAME_H: 32,
+      FRAMES_PER_ROW: 8,
+      TOTAL_ROWS: 8,
 
-      // ──────────────────────────────────────────────────────────────────────
-      // LIGNES UTILISÉES (rows 0-indexed)
-      // ──────────────────────────────────────────────────────────────────────
-      IDLE_ROWS: [0, 1, 2, 3],          // Lignes 1-4 : animations immobiles
-      WALK_ROWS: [4, 5],                // Lignes 5-6 : animations de MARCHE ✅
+      IDLE_ROWS: [0, 1, 2, 3],
+      WALK_ROWS: [4, 5],
       
-      // ──────────────────────────────────────────────────────────────────────
-      // ANIMATION
-      // ──────────────────────────────────────────────────────────────────────
-      FPS: 8,                           // Vitesse animation
-      PINGPONG: true,                   // Aller-retour
+      FPS: 4,                           // ✅ Réduit de 8 à 4 (moins de clignotement)
+      PINGPONG: false,                  // ✅ Désactivé (animation linéaire)
 
-      // ──────────────────────────────────────────────────────────────────────
-      // AFFICHAGE
-      // ──────────────────────────────────────────────────────────────────────
-      CAT_SCALE: 2.5,                   // Agrandissement (32px × 2.5 = 80px)
+      CAT_SCALE: 2.5,
 
-      // ──────────────────────────────────────────────────────────────────────
-      // COMPORTEMENT
-      // ──────────────────────────────────────────────────────────────────────
-      FEAR_RADIUS: 180,                 // Distance fuite souris (px X)
-      FLEE_SPEED: 4.0,                  // Vitesse fuite
-      WALK_SPEED: 1.5,                  // Vitesse marche normale
-      PANIC_SPEED: 5.0,                 // Vitesse sortie d'écran
+      FEAR_RADIUS: 180,
+      FLEE_SPEED: 4.0,
+      WALK_SPEED: 1.5,
+      PANIC_SPEED: 5.0,
 
       OFFSCREEN_MARGIN: 200,
-      HOVER_THRESHOLD: 3,               // Survols avant départ
-      NO_CLICKS_TO_SPAWN: 3,            // ← 3 clics sur "Non" avant spawn ✅
+      HOVER_THRESHOLD: 3,
+      NO_CLICKS_TO_SPAWN: 3,
     };
 
     /* ========================================================================
@@ -282,7 +263,6 @@
        INITIALISATION
        ======================================================================== */
     function init() {
-      // Preload sprite
       const img = new Image();
       img.src = CONFIG.CAT_SRC;
       img.onload = () => {
@@ -293,17 +273,22 @@
         alert(`⚠️ Place ton fichier cat.png dans le dossier image/`);
       };
 
-      // Bouton "Oui"
+      // ✅ Bouton "Oui" avec GIF
       btnYes.addEventListener('click', () => {
         buttons.style.display = 'none';
         confirmation.style.display = 'block';
         noCounter.style.display = 'none';
+        
+        // ✅ Afficher le GIF après 500ms
+        setTimeout(() => {
+          document.getElementById('gifContainer').style.display = 'block';
+        }, 500);
+        
         if (animationFrameId) cancelAnimationFrame(animationFrameId);
         cats.forEach(cat => cat.el.remove());
         cats = [];
       });
 
-      // Bouton "Non" : spawn au 3ᵉ clic ✅
       btnNo.addEventListener('click', () => {
         noClickCount++;
         noCounter.textContent = `"Non" cliqué : ${noClickCount} fois`;
@@ -317,7 +302,6 @@
         }
       });
 
-      // Tracking souris
       document.addEventListener('mousemove', (e) => {
         mouseX = e.clientX;
         mouseY = e.clientY;
@@ -335,19 +319,13 @@
       const yMid = screenH * 0.5;
       const yBot = screenH * 0.8;
 
-      // ──────────────────────────────────────────────────────────────────────
-      // CHATS FIXES (haut/bas) : utilisent lignes IDLE (1-4)
-      // ──────────────────────────────────────────────────────────────────────
-      cats.push(createCat(screenW * 0.15, yTop, 'fixed', 'right', 0)); // Row 1
-      cats.push(createCat(screenW * 0.85, yTop, 'fixed', 'left', 1));  // Row 2
-      cats.push(createCat(screenW * 0.25, yBot, 'fixed', 'right', 2)); // Row 3
-      cats.push(createCat(screenW * 0.75, yBot, 'fixed', 'left', 3));  // Row 4
+      cats.push(createCat(screenW * 0.15, yTop, 'fixed', 'right', 0));
+      cats.push(createCat(screenW * 0.85, yTop, 'fixed', 'left', 1));
+      cats.push(createCat(screenW * 0.25, yBot, 'fixed', 'right', 2));
+      cats.push(createCat(screenW * 0.75, yBot, 'fixed', 'left', 3));
 
-      // ──────────────────────────────────────────────────────────────────────
-      // CHATS MOBILES (milieu) : utilisent lignes WALK (5-6) ✅
-      // ──────────────────────────────────────────────────────────────────────
-      cats.push(createCat(screenW * 0.3, yMid, 'mobile', 'right', 4)); // Row 5
-      cats.push(createCat(screenW * 0.7, yMid, 'mobile', 'left', 5));  // Row 6
+      cats.push(createCat(screenW * 0.3, yMid, 'mobile', 'right', 4));
+      cats.push(createCat(screenW * 0.7, yMid, 'mobile', 'left', 5));
     }
 
     /* ========================================================================
@@ -373,21 +351,19 @@
         vx: 0,
         type,
         facing,
-        rowIndex,                       // Ligne sprite (0-7)
-        frame: 0,                       // Colonne actuelle (0-7)
+        rowIndex,
+        frame: 0,
         frameTimer: 0,
-        direction: 1,                   // +1 forward, -1 backward
+        direction: 1,
         hoverCount: 0,
         leaving: false,
         markedForRemoval: false,
       };
 
-      // Direction initiale pour mobiles
       if (type === 'mobile') {
         cat.vx = (facing === 'right') ? CONFIG.WALK_SPEED : -CONFIG.WALK_SPEED;
       }
 
-      // Mouseenter : incrémenter hoverCount
       el.addEventListener('mouseenter', () => {
         if (cat.type === 'mobile' && !cat.leaving) {
           cat.hoverCount++;
@@ -418,9 +394,6 @@
         cats.forEach(cat => {
           if (cat.markedForRemoval) return;
 
-          // ────────────────────────────────────────────────────────────────
-          // COMPORTEMENT
-          // ────────────────────────────────────────────────────────────────
           if (cat.type === 'fixed') {
             // Immobile
           } else if (cat.leaving) {
@@ -433,17 +406,14 @@
               return;
             }
           } else {
-            // Mobile : fuite ou ping-pong
             const distX = Math.abs(mouseX - cat.x);
             if (distX < CONFIG.FEAR_RADIUS) {
-              // FUITE
               const flee = (cat.x < mouseX) ? -CONFIG.FLEE_SPEED : CONFIG.FLEE_SPEED;
               cat.vx = flee;
               cat.facing = (flee > 0) ? 'right' : 'left';
               setFacing(cat);
               cat.x += cat.vx;
             } else {
-              // PING-PONG
               cat.x += cat.vx;
               const catW = CONFIG.FRAME_W * CONFIG.CAT_SCALE;
               if (cat.x <= 0) {
@@ -460,15 +430,10 @@
             }
           }
 
-          // ────────────────────────────────────────────────────────────────
-          // POSITION
-          // ────────────────────────────────────────────────────────────────
           cat.el.style.left = `${cat.x}px`;
           cat.el.style.top = `${cat.y}px`;
 
-          // ────────────────────────────────────────────────────────────────
-          // ANIMATION SPRITE (ping-pong sur les 8 frames de la row)
-          // ────────────────────────────────────────────────────────────────
+          // ✅ Animation modifiée (linéaire si PINGPONG = false)
           cat.frameTimer += 16;
           if (cat.frameTimer >= frameDelay) {
             cat.frameTimer = 0;
@@ -482,6 +447,7 @@
                 cat.direction = 1;
               }
             } else {
+              // Animation linéaire (loop)
               cat.frame = (cat.frame + 1) % CONFIG.FRAMES_PER_ROW;
             }
             applyFrame(cat);
@@ -518,9 +484,6 @@
       }
     }
 
-    /* ========================================================================
-       DÉMARRAGE
-       ======================================================================== */
     init();
   </script>
 
