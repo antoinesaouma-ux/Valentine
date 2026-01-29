@@ -1,341 +1,265 @@
-<!doctype html>
+<!--
+===========================================================
+💌 Carte Valentine Interactive avec Chats Animés 🐱
+-----------------------------------------------------------
+- Fichier unique index.html (HTML + CSS + JS inline)
+- Carte carrée centrée avec message romantique (style Cyrano)
+- Boutons Oui / Non
+- Les chats apparaissent UNIQUEMENT après 3 clics sur "Non"
+- Chats animés via sprite-sheet (ping-pong)
+- Chats du milieu fuient la souris horizontalement
+- Code entièrement commenté et facilement modifiable
+
+👉 Modifications rapides :
+- Sprite : modifier CAT_SRC
+- Animation : FRAME_W / FRAME_H / TOTAL_FRAMES / FPS
+- Comportement : FEAR_RADIUS / HOVER_THRESHOLD / vitesses
+===========================================================
+-->
+
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Chats — Sprite + JS (ping-pong, flee mouse)</title>
+<meta charset="UTF-8">
+<title>Ma Valentine ❤️</title>
+
 <style>
-  :root{
-    --cat-scale: 1.5;       /* change la taille visuelle des chats */
-    --stage-height: 220px;  /* hauteur de la zone où les chats peuvent être */
-  }
+/* ===================== RESET & PAGE ===================== */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Georgia', serif;
+  background: linear-gradient(135deg, #ffe6eb, #fff);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
-  html,body{ height:100%; margin:0; background:#f5f7fa; font-family:Inter,system-ui,Arial; }
+/* ===================== CARTE ===================== */
+.card {
+  width: min(90vmin, 420px);
+  aspect-ratio: 1 / 1; /* ✅ format carré */
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  text-align: center;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+}
 
-  /* Conteneur principal */
-  .stage {
-    position: relative;
-    width: 100%;
-    height: var(--stage-height);
-    overflow: hidden;
-    background: linear-gradient(180deg, #e9eef6 0%, #f7fbff 100%);
-    border-bottom: 1px solid #e0e6ef;
-  }
+/* ===================== TEXTE ===================== */
+.card p {
+  margin: 10px 0;
+  font-size: 1.15rem;
+}
 
-  /* Layer qui contient tous les chats */
-  .cats-layer {
-    position: absolute;
-    inset: 0;
-    pointer-events: none; /* laisse la souris interagir avec page en dessous */
-  }
+.card p:first-child {
+  font-style: italic;
+}
 
-  /* règle générale pour chaque chat — background-position contrôlé par JS */
-  .cat {
-    position: absolute;
-    width: calc(var(--cat-scale) * 64px);  /* modifie si FRAME_W différent */
-    height: calc(var(--cat-scale) * 64px); /* modifie si FRAME_H différent */
-    background-image: url("images/cat.png"); /* remplace si chemin différent */
-    background-repeat: no-repeat;
-    image-rendering: pixelated; /* pour pixel-art net quand on scale */
-    will-change: transform, background-position;
-    transform-origin: center;
-    transition: transform 200ms linear; /* pour rotation/facing plus doux */
-    pointer-events: auto; /* si tu veux capter events sur chat */
-    user-select: none;
-  }
+/* ===================== BOUTONS ===================== */
+.buttons {
+  margin-top: 20px;
+}
 
-  /* classes utilitaires pour facing */
-  .face-left  { transform: scaleX(-1); } /* flip horizontal */
-  .face-right { transform: scaleX(1); }
+button {
+  padding: 10px 22px;
+  margin: 0 10px;
+  font-size: 1rem;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  background: #ff6b81;
+  color: #fff;
+}
 
-  /* style pour debug (optionnel) */
-  .debug-outline { outline: 1px dashed rgba(0,0,0,0.05); }
+button:focus {
+  outline: 3px solid #000;
+}
 
-  /* petit contrôleur visible pour démo (non nécessaire) */
-  .info {
-    margin: 14px;
-    font-size: 13px;
-    color: #233;
-  }
+button.no {
+  background: #aaa;
+}
+
+/* ===================== MESSAGE OUI ===================== */
+.confirmation {
+  font-size: 1.5rem;
+  margin-top: 30px;
+  color: #ff3366;
+}
+
+/* ===================== CHATS ===================== */
+.cat {
+  position: absolute;
+  width: calc(var(--fw) * var(--scale));
+  height: calc(var(--fh) * var(--scale));
+  background-image: url('images/cat.png'); /* ⚠️ Chemin sprite ici */
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  pointer-events: auto;
+}
 </style>
 </head>
+
 <body>
 
-<div class="info">Démo : chats animés par sprite-sheet — ils fuient la souris (gauche↔droite).</div>
+<div class="card" id="card">
+  <p>Je t’aime non pour ce que tu es, mais pour ce que je suis quand je suis avec toi.</p>
+  <p><strong>Veux-tu être ma Valentine ?</strong></p>
 
-<div class="stage" id="stage">
-  <div class="cats-layer" id="catsLayer"></div>
+  <div class="buttons" id="buttons">
+    <button id="yesBtn">Oui</button>
+    <button id="noBtn" class="no">Non</button>
+  </div>
 </div>
 
 <script>
-/* =========================
-   CONFIG — adapte ici
-   ========================= */
-const CAT_SRC = 'images/cat.png'; // chemin vers la sprite-sheet
-const FRAME_W = 64;               // largeur d'une frame (px)
-const FRAME_H = 64;               // hauteur d'une frame (px)
-const FRAMES_PER_ROW = 8;         // colonnes dans la sprite-sheet
-const TOTAL_FRAMES = 16;          // total frames dans la sprite-sheet
-const FPS = 10;                   // frames par seconde d'animation sprite
-const PINGPONG = true;            // true = animation aller/retour (plus naturel)
-const CAT_SCALE = 1.5;            // correspond à --cat-scale (visuel)
-const SCALED_W = FRAME_W * CAT_SCALE;
-const SCALED_H = FRAME_H * CAT_SCALE;
+/* =========================================================
+   ======================= CONFIG ==========================
+   ========================================================= */
+const CAT_SRC = 'images/cat.png'; // ⚠️ sprite-sheet requise
+const FRAME_W = 64;
+const FRAME_H = 64;
+const FRAMES_PER_ROW = 8;
+const TOTAL_FRAMES = 16;
+const FPS = 10;
+const PINGPONG = true;
+const CAT_SCALE = 1.5;
 
-/* comportement / mouvement */
-const FEAR_RADIUS = 160;          // distance (px) où le chat commence à fuir (sur l'axe X)
-const FLEE_SPEED = 3.0;           // vitesse de fuite (px par frame tick)
-const WALK_SPEED = 1.1;           // vitesse de marche normale (px par frame tick)
-const PANIC_SPEED = 4.0;          // vitesse si très proche
-const HOVER_THRESHOLD = 3;        // au 3ème déclenchement, le chat s'en va de lui-même
-const OFFSCREEN_MARGIN = 80;      // marge pour considérer le chat hors écran avant le "respawn"
+const FEAR_RADIUS = 160;
+const WALK_SPEED = 1.1;
+const FLEE_SPEED = 3.0;
+const PANIC_SPEED = 4.0;
 
-/* layout */
-const TOP_LINE_Y = 24;            // Y (px) pour la ligne du haut (fixe)
-const MID_LINE_Y = 80;            // Y (px) pour les chats mobiles (ligne centrale)
-const BOTTOM_LINE_Y = 148;        // Y (px) pour la ligne du bas (fixe)
-const STAGE = document.getElementById('stage');
-const CATS_LAYER = document.getElementById('catsLayer');
+const HOVER_THRESHOLD = 3;
+const HOVER_NO_SPAWN_THRESHOLD = 3; // ✅ 3 clics sur "Non"
 
-/* tableau d'objets chats animés */
+/* ========================================================= */
+
+document.documentElement.style.setProperty('--fw', FRAME_W + 'px');
+document.documentElement.style.setProperty('--fh', FRAME_H + 'px');
+document.documentElement.style.setProperty('--scale', CAT_SCALE);
+
+const card = document.getElementById('card');
+const yesBtn = document.getElementById('yesBtn');
+const noBtn = document.getElementById('noBtn');
+const buttons = document.getElementById('buttons');
+
+let noCount = 0;
+let catsSpawned = false;
+let mouseX = 0;
+
+/* ===================== SOURIS ===================== */
+window.addEventListener('mousemove', e => {
+  mouseX = e.clientX;
+});
+
+/* ===================== OUI ===================== */
+yesBtn.onclick = () => {
+  buttons.remove();
+  const msg = document.createElement('div');
+  msg.className = 'confirmation';
+  msg.textContent = 'Oui ! ❤️';
+  card.appendChild(msg);
+};
+
+/* ===================== NON ===================== */
+noBtn.onclick = () => {
+  noCount++;
+  if (noCount >= HOVER_NO_SPAWN_THRESHOLD && !catsSpawned) {
+    spawnCats();
+    catsSpawned = true;
+  }
+};
+
+/* ===================== CHATS ===================== */
 const cats = [];
 
-/* loader image (pour connaitre width/height si besoin) */
-const spriteImg = new Image();
-spriteImg.src = CAT_SRC;
+function spawnCats() {
+  const positions = ['20%', '50%', '80%'];
 
-/* helper : crée un chat DOM + état JS */
-function spawnCat(options = {}) {
-  const el = document.createElement('div');
-  el.className = 'cat face-right';
-  el.style.backgroundImage = `url("${CAT_SRC}")`;
-  el.style.width = (SCALED_W) + 'px';
-  el.style.height = (SCALED_H) + 'px';
+  positions.forEach((top, index) => {
+    const cat = document.createElement('div');
+    cat.className = 'cat';
+    cat.style.top = top;
+    cat.style.left = '20px';
 
-  const state = {
-    el,
-    x: options.x ?? 0,
-    y: options.y ?? MID_LINE_Y,
-    vx: options.vx ?? 0,
-    facing: options.facing ?? 'right',
-    frame: options.frame ?? 0,
-    dirFrame: 1,       // direction pour ping-pong (1 ou -1)
-    timeAcc: 0,
-    hoverCount: 0,     // compteur pour trigger "part après 3"
-    leaving: false,    // quand true le chat part hors écran (marche fluide)
-    idle: options.idle ?? false, /* si true : ne bouge pas (ligne haute/basse) */
-  };
+    const obj = {
+      el: cat,
+      x: 20,
+      y: 0,
+      vx: WALK_SPEED,
+      frame: 0,
+      dir: 1,
+      hover: 0,
+      mobile: index === 1
+    };
 
-  // position initiale
-  el.style.left = state.x + 'px';
-  el.style.top  = state.y + 'px';
-
-  // click / interaction : incrémenter hoverCount (ou tu peux capter mouseenter)
-  el.addEventListener('mouseenter', () => {
-    // on compte une interaction "proche" seulement si souris est proche en X
-    state.hoverCount++;
-    if (state.hoverCount >= HOVER_THRESHOLD && !state.leaving) {
-      // déclencher leave (sans téléport)
-      state.leaving = true;
-      // déterminer direction de sortie (si face droite -> sort par la droite)
-      state.vx = (state.facing === 'right') ? Math.abs(FLEE_SPEED) : -Math.abs(FLEE_SPEED);
-    }
-  });
-
-  CATS_LAYER.appendChild(el);
-  cats.push(state);
-  return state;
-}
-
-/* initialise une distribution de chats :
-   - quelques fixes en haut et bas (idle=true)
-   - quelques mobiles sur la ligne centrale
-*/
-function initCats() {
-  const w = window.innerWidth;
-  // top line : 3 chats fixes
-  const topXs = [20, Math.floor(w/2)-40, w-120];
-  topXs.forEach((x) => spawnCat({ x, y: TOP_LINE_Y, idle: true, facing: 'left' }));
-
-  // middle line : 5 chats mobiles (fuir la souris)
-  const midXs = [40, 180, Math.floor(w/2)-60, Math.floor(w/2)+120, w-200];
-  midXs.forEach((x,i) => {
-    const s = spawnCat({ x, y: MID_LINE_Y, idle: false, facing: i % 2 === 0 ? 'right' : 'left' });
-    // vitesse initiale (petit mouvement pour ping-pong gauche-droite)
-    s.vx = s.facing === 'right' ? WALK_SPEED : -WALK_SPEED;
-  });
-
-  // bottom line : 3 chats fixes
-  const botXs = [60, Math.floor(w/2)-30, w-160];
-  botXs.forEach((x) => spawnCat({ x, y: BOTTOM_LINE_Y, idle: true, facing: 'right' }));
-}
-
-/* application du background-position selon frame index */
-function applyFrame(state) {
-  const fx = state.frame % FRAMES_PER_ROW;
-  const fy = Math.floor(state.frame / FRAMES_PER_ROW);
-  const bx = -(fx * FRAME_W) + 'px';
-  const by = -(fy * FRAME_H) + 'px';
-  // ajuster la position de background selon l'échelle: CSS background-size s'il faut
-  state.el.style.backgroundPosition = `${bx} ${by}`;
-}
-
-/* gère la logique de facing (flip via class) */
-function setFacing(state, dir) {
-  if (dir > 0) {
-    state.facing = 'right';
-    state.el.classList.remove('face-left');
-    state.el.classList.add('face-right');
-  } else if (dir < 0) {
-    state.facing = 'left';
-    state.el.classList.remove('face-right');
-    state.el.classList.add('face-left');
-  }
-}
-
-/* VARIABLES pour animation */
-let lastTs = 0;
-const frameDuration = 1000 / FPS;
-let mouseX = window.innerWidth / 2; // position courante de la souris X
-let mouseY = 0;
-
-/* surveille la souris pour la fuite */
-window.addEventListener('mousemove', (e) => {
-  mouseX = e.clientX;
-  mouseY = e.clientY;
-});
-
-/* réajuste à la resize */
-window.addEventListener('resize', () => {
-  // si tu veux replacer/respawn selon nouvelle largeur, gère ici
-});
-
-/* Fonction animate appelée via requestAnimationFrame */
-function animate(ts) {
-  if (!lastTs) lastTs = ts;
-  const dt = ts - lastTs;
-  lastTs = ts;
-
-  for (const c of cats) {
-    // -- avancée sprite-frame selon FPS
-    c.timeAcc += dt;
-    while (c.timeAcc >= frameDuration) {
-      c.timeAcc -= frameDuration;
-      if (PINGPONG) {
-        c.frame += c.dirFrame;
-        if (c.frame >= TOTAL_FRAMES) { c.frame = TOTAL_FRAMES - 2; c.dirFrame = -1; }
-        if (c.frame < 0) { c.frame = 1; c.dirFrame = 1; }
-      } else {
-        c.frame = (c.frame + 1) % TOTAL_FRAMES;
+    cat.addEventListener('mouseenter', () => {
+      obj.hover++;
+      if (obj.hover >= HOVER_THRESHOLD) {
+        obj.vx = PANIC_SPEED * obj.dir;
       }
-    }
-    applyFrame(c);
+    });
 
-    // -- comportement de mouvement (uniquement X)
-    if (c.idle) {
-      // chats fixes : ne bougent pas
-      continue;
-    }
+    card.appendChild(cat);
+    cats.push(obj);
+  });
 
-    // si en mode leaving (après 3 hover), marcher hors écran
-    if (c.leaving) {
-      c.x += c.vx; // vx déjà déterminé lors du trigger
-      // garder la ligne Y fixe (pas de vertical movement)
+  requestAnimationFrame(loop);
+}
+
+/* ===================== ANIMATION ===================== */
+let last = 0;
+
+function loop(ts) {
+  if (ts - last > 1000 / FPS) {
+    cats.forEach(c => {
+      // Mouvement horizontal uniquement
+      if (c.mobile) {
+        const dist = Math.abs(mouseX - (card.offsetLeft + c.x));
+        if (dist < FEAR_RADIUS) {
+          c.vx = (mouseX < card.offsetLeft + c.x) ? FLEE_SPEED : -FLEE_SPEED;
+        } else {
+          c.vx = c.dir * WALK_SPEED;
+        }
+        c.x += c.vx;
+      }
+
+      // Ping-pong écran
+      if (c.x < 0 || c.x > card.clientWidth - FRAME_W * CAT_SCALE) {
+        c.dir *= -1;
+        c.vx *= -1;
+      }
+
       c.el.style.left = c.x + 'px';
-      // si complètement hors écran -> retirer ou reset
-      if (c.x < -OFFSCREEN_MARGIN || c.x > window.innerWidth + OFFSCREEN_MARGIN) {
-        // on réinitialise après 2s (ou on peut supprimer définitivement)
-        setTimeout(() => {
-          // reset état : replace sur la ligne du milieu et réinitialise hoverCount
-          c.leaving = false;
-          c.hoverCount = 0;
-          // replacer au bord opposé et faire revenir (effet ping-pong gauche-droite)
-          if (c.vx > 0) { c.x = -SCALED_W - 20; c.vx = WALK_SPEED; setFacing(c, 1); }
-          else { c.x = window.innerWidth + 20; c.vx = -WALK_SPEED; setFacing(c, -1); }
-          c.el.style.left = c.x + 'px';
-        }, 700);
-      }
-      continue;
-    }
 
-    // calcul de la distance horizontale à la souris (on veut uniquement X)
-    const cCenterX = c.x + (SCALED_W / 2);
-    const distX = mouseX - cCenterX;
-    const absDistX = Math.abs(distX);
+      // Animation sprite
+      c.frame += PINGPONG ? c.dir : 1;
+      if (c.frame >= TOTAL_FRAMES || c.frame < 0) c.dir *= -1;
 
-    // si la souris est dans la zone de peur -> fuir horizontalement
-    if (absDistX < FEAR_RADIUS) {
-      // sens de fuite : si la souris est à droite du chat -> on va à gauche
-      const fleeDir = distX > 0 ? -1 : 1;
-      // vitesse dépendante de la proximité
-      const speed = absDistX < 80 ? PANIC_SPEED : FLEE_SPEED;
-      c.vx = fleeDir * speed;
-      setFacing(c, fleeDir);
-    } else {
-      // souris loin -> retour progressif à une petite errance/pas constant
-      // si on est proche d'une limite on fait rebondir pour donner effet "ping-pong"
-      if (Math.abs(c.vx) < 0.001) {
-        // restore small walk
-        c.vx = (c.facing === 'right') ? WALK_SPEED : -WALK_SPEED;
-      }
-      // on garde la vitesse actuelle (errance)
-    }
+      const fx = (c.frame % FRAMES_PER_ROW) * FRAME_W;
+      const fy = Math.floor(c.frame / FRAMES_PER_ROW) * FRAME_H;
+      c.el.style.backgroundPosition = `-${fx}px -${fy}px`;
 
-    // appliquer déplacement X
-    c.x += c.vx;
+      // Orientation
+      c.el.style.transform = c.vx < 0 ? 'scaleX(-1)' : 'scaleX(1)';
+    });
 
-    // garder sur la même ligne Y (pas de vertical)
-    c.el.style.left = c.x + 'px';
-
-    // si on dépasse vraiment les bords, on "fait revenir" en douceur
-    if (c.x < -OFFSCREEN_MARGIN) {
-      // si hors gauche, replace à gauche + small delay pour donner impression de re-entry
-      c.x = -OFFSCREEN_MARGIN;
-      c.vx = Math.abs(WALK_SPEED);
-      setFacing(c, 1);
-    } else if (c.x > window.innerWidth - (SCALED_W) + OFFSCREEN_MARGIN) {
-      c.x = window.innerWidth - (SCALED_W) + OFFSCREEN_MARGIN;
-      c.vx = -Math.abs(WALK_SPEED);
-      setFacing(c, -1);
-    }
+    last = ts;
   }
-
-  requestAnimationFrame(animate);
+  requestAnimationFrame(loop);
 }
 
-/* initialisation visuelle / scale CSS variable */
-document.documentElement.style.setProperty('--cat-scale', CAT_SCALE);
-initCats();
-
-/* initial placement : calcule la position left en pixels, centre si nécessaire */
-function layoutInitialPositions() {
-  const w = window.innerWidth;
-  // si spawn initial a mis des positions > largeur, clamp
-  for (const c of cats) {
-    if (c.x > w - SCALED_W) c.x = Math.max(10, w - SCALED_W - 10);
-    c.el.style.left = c.x + 'px';
-    c.el.style.top  = c.y + 'px';
-  }
-}
-layoutInitialPositions();
-
-/* démarrer l'animation (après chargement de la sprite si nécessaire) */
-if (spriteImg.complete) {
-  requestAnimationFrame(animate);
-} else {
-  spriteImg.onload = () => {
-    // si tu veux recalculer FRAMES en fonction de spriteImg.naturalWidth, fais-le ici
-    requestAnimationFrame(animate);
-  };
-}
-
-/* --- Optionnel : debug pour tester le "hover" programmatique --- */
-/* Uncommenter si tu veux debugger :
-setInterval(() => {
-  console.log('cats:', cats.map(c => ({x: c.x, hover: c.hoverCount, leaving: c.leaving})));
-}, 2000);
-*/
-
+/* ===================== ERREUR SPRITE ===================== */
+const img = new Image();
+img.onerror = () => {
+  console.error('❌ Sprite introuvable : images/cat.png');
+};
+img.src = CAT_SRC;
 </script>
+
 </body>
 </html>
