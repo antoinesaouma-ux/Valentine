@@ -411,7 +411,7 @@
       FRAME_H: 32,
       FRAMES_PER_ROW: 8,
       TOTAL_ROWS: 8,
-
+      
       IDLE_ROWS: [0, 1, 2, 3],
       WALK_ROWS: [4, 5],
       
@@ -437,7 +437,8 @@
       SHOOTING_STAR_INTERVAL: 12000,
 
       NO_CLICKS_TO_HIDE: 11, // ✅ AJOUTÉ
-      YES_MAGNET_SPEED: 0.08, // ✅ AJOUTÉ
+      YES_MAGNET_SPEED: 0.04, // ✅ AJOUTÉ
+      YES_MAX_OFFSET: 40,
     };
 
     const TEASING_PHRASES = [
@@ -660,26 +661,22 @@ function attractYesButton() {
   const targetX = Math.max(-max, Math.min(dx, max));
   const targetY = Math.max(-max, Math.min(dy, max));
 
-  const currentX = parseFloat(btnYes.dataset.offsetX || '0');
-  const currentY = parseFloat(btnYes.dataset.offsetY || '0');
+  const currentX = parseFloat(btnYes.dataset.x || '0');
+  const currentY = parseFloat(btnYes.dataset.y || '0');
 
   const lerp = CONFIG.YES_MAGNET_SPEED;
 
   const nextX = currentX + (targetX - currentX) * lerp;
   const nextY = currentY + (targetY - currentY) * lerp;
 
-  btnYes.dataset.offsetX = nextX;
-  btnYes.dataset.offsetY = nextY;
-
-  const scale = btnYes.dataset.scale || '1';
+  btnYes.dataset.x = nextX;
+  btnYes.dataset.y = nextY;
 
   btnYes.style.transform =
-    `scale(${scale}) translate(${nextX}px, ${nextY}px)`;
+    `scale(1.35) translate(${nextX}px, ${nextY}px)`;
 
   requestAnimationFrame(attractYesButton);
 }
-
-attractYesButton();
 
 
 attractYesButton(); // ✅ Démarre la boucle
