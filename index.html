@@ -565,10 +565,21 @@ function handleNoClick() {
     btnNo.style.pointerEvents = 'none';
     
     // Agrandir le bouton "Oui" (+30%)
-    btnYes.dataset.scale = '1.35';
+    const rect = btnYes.getBoundingClientRect();
+
+    btnYes.style.position = 'fixed';
+    btnYes.style.left = `${rect.left}px`;
+    btnYes.style.top = `${rect.top}px`;
+    btnYes.style.margin = '0';
     btnYes.style.transform = 'scale(1.35)';
-    btnYes.style.transition = 'transform 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+    btnYes.style.zIndex = '9999';
     
+    btnYes.dataset.x = rect.left;
+    btnYes.dataset.y = rect.top;
+    
+    magnetActive = true;
+    
+        
     // Centrer le bouton "Oui"
     buttons.style.justifyContent = 'center';
     
@@ -658,11 +669,11 @@ function attractYesButton() {
 
   const max = CONFIG.YES_MAX_OFFSET;
 
-  const targetX = Math.max(-max, Math.min(dx, max));
-  const targetY = Math.max(-max, Math.min(dy, max));
+  const targetX = rect.left + Math.max(-max, Math.min(dx, max));
+  const targetY = rect.top + Math.max(-max, Math.min(dy, max));
 
-  const currentX = parseFloat(btnYes.dataset.x || '0');
-  const currentY = parseFloat(btnYes.dataset.y || '0');
+  const currentX = parseFloat(btnYes.dataset.x);
+  const currentY = parseFloat(btnYes.dataset.y);
 
   const lerp = CONFIG.YES_MAGNET_SPEED;
 
@@ -672,12 +683,12 @@ function attractYesButton() {
   btnYes.dataset.x = nextX;
   btnYes.dataset.y = nextY;
 
-  btnYes.style.transform =
-    `scale(1.35) translate(${nextX}px, ${nextY}px)`;
+  btnYes.style.left = `${nextX}px`;
+  btnYes.style.top = `${nextY}px`;
+  btnYes.style.transform = 'scale(1.35)';
 
   requestAnimationFrame(attractYesButton);
 }
-
 
 attractYesButton(); // ✅ Démarre la boucle
 
