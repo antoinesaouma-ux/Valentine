@@ -1,123 +1,151 @@
-<!--
-===========================================================
-💌 Carte Valentine Interactive avec Chats Animés 🐱
-+ Fond animé : poussière lumineuse + parallaxe doux 🌌🌠
------------------------------------------------------------
-- Fichier unique index.html
-- Carte carrée centrée
-- Chats invisibles avant 3 clics sur "Non"
-- Sprite-sheet animée ping-pong
-- Fond animé CSS + JS (sans images)
-===========================================================
-
-MODIFICATIONS RAPIDES :
-- Intensité parallaxe : PARALLAX_STRENGTH
-- Nombre de particules : PARTICLE_COUNT
-- Vitesse poussière : PARTICLE_SPEED
-===========================================================
--->
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<title>Ma Valentine ❤️</title>
+<meta charset="UTF-8" />
+<title>💖</title>
 
 <style>
-/* =========================================================
-   ==================== FOND ANIMÉ =========================
-   ========================================================= */
+/* =====================================================
+   GLOBAL – MODERNE / CLEAN
+   ===================================================== */
 
-body {
+:root {
+  --glass-bg: rgba(255,255,255,0.75);
+  --glass-border: rgba(255,255,255,0.35);
+  --accent: #ff4d6d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
   margin: 0;
   height: 100%;
-  font-family: 'Georgia', serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
+  background: radial-gradient(circle at top, #fef1f4, #f7cbd3);
+  overflow: hidden;
   display: flex;
   justify-content: center;
   align-items: center;
-  background: radial-gradient(circle at top, #ffe6f0, #ffd1dc);
-  overflow: hidden;
 }
 
-/* Canvas poussière */
+/* =====================================================
+   FOND – POUSSIÈRE + PARALLAXE
+   ===================================================== */
+
 #dust {
   position: fixed;
   inset: 0;
   z-index: -2;
 }
 
-/* Couche parallaxe */
 #parallax {
   position: fixed;
-  inset: -5%;
-  background: radial-gradient(circle at center, rgba(255,255,255,0.25), transparent 60%);
+  inset: -10%;
+  background: radial-gradient(circle at center, rgba(255,255,255,0.35), transparent 60%);
   z-index: -1;
   transition: transform 0.15s ease-out;
 }
 
-/* ===================== CARTE ===================== */
+/* =====================================================
+   CARTE
+   ===================================================== */
+
 .card {
   width: min(90vmin, 420px);
   aspect-ratio: 1 / 1;
-  background: #fff;
-  border-radius: 20px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  padding: 28px;
+  border-radius: 22px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(18px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 30px 60px rgba(0,0,0,0.15);
   text-align: center;
-  padding: 24px;
   position: relative;
   overflow: hidden;
 }
 
-/* ===================== TEXTE ===================== */
+/* =====================================================
+   TEXTE
+   ===================================================== */
+
 .card p {
-  margin: 10px 0;
+  margin: 0 0 14px;
   font-size: 1.15rem;
+  color: #222;
 }
 
 .card p:first-child {
   font-style: italic;
+  opacity: 0.85;
 }
 
-/* ===================== BOUTONS ===================== */
+.card strong {
+  font-size: 1.25rem;
+}
+
+/* =====================================================
+   BOUTONS
+   ===================================================== */
+
 .buttons {
-  margin-top: 20px;
+  margin-top: 26px;
 }
 
 button {
-  padding: 10px 22px;
-  margin: 0 10px;
-  font-size: 1rem;
-  border-radius: 20px;
+  padding: 12px 26px;
+  border-radius: 999px;
   border: none;
   cursor: pointer;
-  background: #ff6b81;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+#yesBtn {
+  background: var(--accent);
   color: #fff;
+  box-shadow: 0 8px 20px rgba(255,77,109,0.35);
 }
 
-button.no {
-  background: #aaa;
+#noBtn {
+  background: #e0e0e0;
+  color: #333;
+  margin-left: 12px;
 }
 
-button:focus {
-  outline: 3px solid #000;
+/* =====================================================
+   LOVE MOCHI (OUI)
+   ===================================================== */
+
+.love {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
 
-/* ===================== CONFIRMATION ===================== */
-.confirmation {
-  font-size: 1.6rem;
-  margin-top: 30px;
-  color: #ff3366;
+.love img {
+  max-width: 70%;
+  border-radius: 16px;
 }
 
-/* ===================== CHATS ===================== */
+/* =====================================================
+   CHATS (SPRITE SHEET)
+   ===================================================== */
+
 .cat {
   position: absolute;
   width: calc(var(--fw) * var(--scale));
   height: calc(var(--fh) * var(--scale));
-  background-image: url('images/cat.png'); /* ⚠️ sprite ici */
+  background-image: url("image/cat.png"); /* ✅ sprite ici */
   background-repeat: no-repeat;
   image-rendering: pixelated;
-  pointer-events: auto;
 }
 </style>
 </head>
@@ -128,77 +156,69 @@ button:focus {
 <div id="parallax"></div>
 
 <div class="card" id="card">
-  <p>Je t’aime non pour ce que tu es, mais pour ce que je suis quand je suis avec toi.</p>
-  <p><strong>Veux-tu être ma Valentine ?</strong></p>
+  <p>Je t’aime non pour ce que tu es, mais pour ce que je deviens quand je suis avec toi.</p>
+  <p><strong>Veux-tu être ma Valentine&nbsp;?</strong></p>
 
   <div class="buttons" id="buttons">
     <button id="yesBtn">Oui</button>
-    <button id="noBtn" class="no">Non</button>
+    <button id="noBtn">Non</button>
   </div>
 </div>
 
 <script>
-/* =========================================================
-   ======================= CONFIG ==========================
-   ========================================================= */
-const CAT_SRC = 'images/cat.png';
+/* =====================================================
+   CONFIG CHATS
+   ===================================================== */
 const FRAME_W = 64;
 const FRAME_H = 64;
 const FRAMES_PER_ROW = 8;
 const TOTAL_FRAMES = 16;
 const FPS = 10;
-const CAT_SCALE = 1.5;
+const SCALE = 1.4;
 
-const FEAR_RADIUS = 160;
-const WALK_SPEED = 1.1;
-const FLEE_SPEED = 3.0;
-const PANIC_SPEED = 4.0;
+const FEAR_RADIUS = 150;
+const WALK_SPEED = 1;
+const FLEE_SPEED = 3;
 
-const HOVER_THRESHOLD = 3;
-const HOVER_NO_SPAWN_THRESHOLD = 3;
+/* ===================================================== */
 
-/* Fond animé */
-const PARTICLE_COUNT = 90;      // quantité de poussière
-const PARTICLE_SPEED = 0.15;    // vitesse verticale
-const PARALLAX_STRENGTH = 18;   // intensité parallaxe
+document.documentElement.style.setProperty("--fw", FRAME_W + "px");
+document.documentElement.style.setProperty("--fh", FRAME_H + "px");
+document.documentElement.style.setProperty("--scale", SCALE);
 
-/* ========================================================= */
-
-document.documentElement.style.setProperty('--fw', FRAME_W + 'px');
-document.documentElement.style.setProperty('--fh', FRAME_H + 'px');
-document.documentElement.style.setProperty('--scale', CAT_SCALE);
-
-const card = document.getElementById('card');
-const yesBtn = document.getElementById('yesBtn');
-const noBtn = document.getElementById('noBtn');
-const buttons = document.getElementById('buttons');
+const card = document.getElementById("card");
+const yesBtn = document.getElementById("yesBtn");
+const noBtn = document.getElementById("noBtn");
+const buttons = document.getElementById("buttons");
 
 let noCount = 0;
 let catsSpawned = false;
 let mouseX = 0;
 
-window.addEventListener('mousemove', e => mouseX = e.clientX);
+window.addEventListener("mousemove", e => mouseX = e.clientX);
 
-/* ===================== PARALLAX ===================== */
-const parallax = document.getElementById('parallax');
-window.addEventListener('mousemove', e => {
-  const x = (e.clientX / window.innerWidth - 0.5) * PARALLAX_STRENGTH;
-  const y = (e.clientY / window.innerHeight - 0.5) * PARALLAX_STRENGTH;
+/* ===================== PARALLAXE ===================== */
+const parallax = document.getElementById("parallax");
+window.addEventListener("mousemove", e => {
+  const x = (e.clientX / innerWidth - 0.5) * 18;
+  const y = (e.clientY / innerHeight - 0.5) * 18;
   parallax.style.transform = `translate(${x}px, ${y}px)`;
 });
 
-/* ===================== OUI / NON ===================== */
+/* ===================== OUI ===================== */
 yesBtn.onclick = () => {
-  buttons.remove();
-  const msg = document.createElement('div');
-  msg.className = 'confirmation';
-  msg.textContent = 'Oui ! ❤️';
-  card.appendChild(msg);
+  card.innerHTML = `
+    <div class="love">
+      <img src="image/love-mochi.gif" alt="Love Mochi">
+      <strong>Oui 💖</strong>
+    </div>
+  `;
 };
 
+/* ===================== NON ===================== */
 noBtn.onclick = () => {
   noCount++;
-  if (noCount >= HOVER_NO_SPAWN_THRESHOLD && !catsSpawned) {
+  if (noCount >= 3 && !catsSpawned) {
     spawnCats();
     catsSpawned = true;
   }
@@ -208,52 +228,43 @@ noBtn.onclick = () => {
 const cats = [];
 
 function spawnCats() {
-  ['20%', '50%', '80%'].forEach((top, i) => {
-    const el = document.createElement('div');
-    el.className = 'cat';
+  ["20%", "50%", "80%"].forEach((top, i) => {
+    const el = document.createElement("div");
+    el.className = "cat";
     el.style.top = top;
-    el.style.left = '20px';
+    el.style.left = "20px";
 
     const c = {
       el,
       x: 20,
-      vx: WALK_SPEED,
       frame: 0,
       dir: 1,
-      hover: 0,
       mobile: i === 1
     };
-
-    el.addEventListener('mouseenter', () => {
-      c.hover++;
-      if (c.hover >= HOVER_THRESHOLD) c.vx = PANIC_SPEED * c.dir;
-    });
 
     card.appendChild(el);
     cats.push(c);
   });
 
-  requestAnimationFrame(loop);
+  requestAnimationFrame(animateCats);
 }
 
 let last = 0;
-function loop(ts) {
-  if (ts - last > 1000 / FPS) {
+function animateCats(t) {
+  if (t - last > 1000 / FPS) {
     cats.forEach(c => {
       if (c.mobile) {
         const d = Math.abs(mouseX - (card.offsetLeft + c.x));
-        c.vx = d < FEAR_RADIUS
+        c.x += d < FEAR_RADIUS
           ? (mouseX < card.offsetLeft + c.x ? FLEE_SPEED : -FLEE_SPEED)
-          : c.dir * WALK_SPEED;
-        c.x += c.vx;
+          : WALK_SPEED * c.dir;
       }
 
-      if (c.x < 0 || c.x > card.clientWidth - FRAME_W * CAT_SCALE) {
+      if (c.x < 0 || c.x > card.clientWidth - FRAME_W * SCALE) {
         c.dir *= -1;
-        c.vx *= -1;
       }
 
-      c.el.style.left = c.x + 'px';
+      c.el.style.left = c.x + "px";
 
       c.frame += c.dir;
       if (c.frame >= TOTAL_FRAMES || c.frame < 0) c.dir *= -1;
@@ -261,51 +272,47 @@ function loop(ts) {
       const fx = (c.frame % FRAMES_PER_ROW) * FRAME_W;
       const fy = Math.floor(c.frame / FRAMES_PER_ROW) * FRAME_H;
       c.el.style.backgroundPosition = `-${fx}px -${fy}px`;
-      c.el.style.transform = c.vx < 0 ? 'scaleX(-1)' : 'scaleX(1)';
+      c.el.style.transform = c.dir < 0 ? "scaleX(-1)" : "scaleX(1)";
     });
-    last = ts;
+    last = t;
   }
-  requestAnimationFrame(loop);
+  requestAnimationFrame(animateCats);
 }
 
-/* ===================== POUSSIÈRE LUMINEUSE ===================== */
-const canvas = document.getElementById('dust');
-const ctx = canvas.getContext('2d');
+/* ===================== POUSSIÈRE ===================== */
+const canvas = document.getElementById("dust");
+const ctx = canvas.getContext("2d");
 let w, h, particles = [];
 
 function resize() {
-  w = canvas.width = window.innerWidth;
-  h = canvas.height = window.innerHeight;
+  w = canvas.width = innerWidth;
+  h = canvas.height = innerHeight;
 }
-window.addEventListener('resize', resize);
+window.addEventListener("resize", resize);
 resize();
 
-for (let i = 0; i < PARTICLE_COUNT; i++) {
+for (let i = 0; i < 80; i++) {
   particles.push({
     x: Math.random() * w,
     y: Math.random() * h,
-    r: Math.random() * 1.8 + 0.5,
-    a: Math.random() * Math.PI * 2
+    r: Math.random() * 1.6 + 0.4,
+    v: Math.random() * 0.3 + 0.1
   });
 }
 
-function dustLoop() {
+function dust() {
   ctx.clearRect(0, 0, w, h);
-  ctx.fillStyle = 'rgba(255,255,255,0.6)';
-
+  ctx.fillStyle = "rgba(255,255,255,0.6)";
   particles.forEach(p => {
-    p.y -= PARTICLE_SPEED;
-    p.x += Math.sin(p.a) * 0.2;
+    p.y -= p.v;
     if (p.y < 0) p.y = h;
-
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
     ctx.fill();
   });
-
-  requestAnimationFrame(dustLoop);
+  requestAnimationFrame(dust);
 }
-dustLoop();
+dust();
 </script>
 
 </body>
