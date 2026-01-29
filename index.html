@@ -6,15 +6,17 @@
   <title>Veux-tu être ma Valentine ? 💕</title>
   <style>
     :root {
+      /* ✅ NOUVELLES COULEURS (plus douces et élégantes) */
       --card-size: min(90vmin, 600px);
-      --card-bg: linear-gradient(135deg, #ffeef8 0%, #ffe0f0 100%);
-      --card-shadow: 0 20px 60px rgba(255, 105, 180, 0.3);
-      --text-color: #d63384;
-      --btn-yes-bg: #28a745;
-      --btn-yes-hover: #218838;
-      --btn-no-bg: #dc3545;
-      --btn-no-hover: #c82333;
+      --card-bg: linear-gradient(135deg, #fff9fb 0%, #ffe8f0 100%);
+      --card-shadow: 0 20px 60px rgba(220, 120, 150, 0.25);
+      --text-color: #c2185b;
+      --btn-yes-bg: #4caf50;
+      --btn-yes-hover: #45a049;
+      --btn-no-bg: #f06292;
+      --btn-no-hover: #ec407a;
       --font-romantic: 'Georgia', 'Palatino', serif;
+      --accent-color: #d81b60;
     }
 
     * {
@@ -25,7 +27,7 @@
 
     body {
       font-family: var(--font-romantic);
-      background: linear-gradient(to bottom, #fff5f7, #ffe4e9);
+      background: linear-gradient(to bottom, #fefefe, #fff0f5);
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -48,7 +50,7 @@
       text-align: center;
       position: relative;
       z-index: 10;
-      border: 3px solid rgba(255, 182, 193, 0.6);
+      border: 2px solid rgba(216, 27, 96, 0.15);
     }
 
     .romantic-text {
@@ -69,7 +71,7 @@
       font-size: clamp(1.2rem, 3vmin, 1.8rem);
       font-style: normal;
       margin-top: 1.5rem;
-      color: #c2185b;
+      color: var(--accent-color);
     }
 
     .buttons {
@@ -88,7 +90,7 @@
       border-radius: 50px;
       cursor: pointer;
       transition: all 0.3s ease;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
     }
 
     button:focus {
@@ -117,7 +119,7 @@
     .confirmation {
       display: none;
       font-size: clamp(1.5rem, 4vmin, 2.5rem);
-      color: #28a745;
+      color: #4caf50;
       font-weight: bold;
       animation: heartbeat 1s infinite;
     }
@@ -127,21 +129,49 @@
       50% { transform: scale(1.1); }
     }
 
-    #noCounter {
+    /* ✅ PHRASES TAQUINES */
+    #teasingMessage {
       position: absolute;
       top: 1rem;
-      right: 1rem;
-      background: rgba(220, 53, 69, 0.2);
-      padding: 0.5rem 1rem;
-      border-radius: 10px;
-      font-size: 0.9rem;
-      color: var(--text-color);
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(240, 98, 146, 0.15);
+      padding: 1rem 2rem;
+      border-radius: 15px;
+      font-size: clamp(0.9rem, 2vmin, 1.1rem);
+      color: var(--accent-color);
+      font-style: italic;
       display: none;
+      max-width: 80%;
+      text-align: center;
+      border: 2px solid rgba(240, 98, 146, 0.3);
+      animation: slideDown 0.5s ease-out;
     }
 
-    /* ========================================================================
-       GIF DE CONFIRMATION ✅
-       ======================================================================== */
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+    }
+
+    #noCounter {
+      position: absolute;
+      bottom: 1rem;
+      right: 1rem;
+      background: rgba(240, 98, 146, 0.15);
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      color: var(--text-color);
+      display: none;
+      border: 1px solid rgba(240, 98, 146, 0.3);
+    }
+
     .gif-container {
       display: none;
       margin-top: 2rem;
@@ -160,9 +190,7 @@
       to { opacity: 1; transform: scale(1); }
     }
 
-    /* ========================================================================
-       CHATS
-       ======================================================================== */
+    /* ✅ CHATS (sans clignotement) */
     .cat {
       position: fixed;
       background-image: url('image/cat.png');
@@ -172,15 +200,17 @@
       image-rendering: crisp-edges;
       pointer-events: auto;
       z-index: 5;
-      transition: none;
+      will-change: transform, left, top;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
     }
 
     .cat.face-left {
-      transform: scaleX(-1);
+      transform: scaleX(-1) translateZ(0);
     }
 
     .cat.face-right {
-      transform: scaleX(1);
+      transform: scaleX(1) translateZ(0);
     }
   </style>
 </head>
@@ -204,12 +234,13 @@
 
     <div class="confirmation" id="confirmation">
       Oui ! ❤️✨
-      <!-- ✅ GIF ajouté ici -->
       <div class="gif-container" id="gifContainer">
         <img src="image/love-mochi.gif" alt="Love GIF" />
       </div>
     </div>
 
+    <!-- ✅ MESSAGE TAQUIN -->
+    <div id="teasingMessage"></div>
     <div id="noCounter"></div>
   </div>
 
@@ -229,8 +260,8 @@
       IDLE_ROWS: [0, 1, 2, 3],
       WALK_ROWS: [4, 5],
       
-      FPS: 4,                           // ✅ Réduit de 8 à 4 (moins de clignotement)
-      PINGPONG: false,                  // ✅ Désactivé (animation linéaire)
+      FPS: 6,                           // ✅ Réduit encore (6 FPS = ~166ms par frame)
+      PINGPONG: false,                  // ✅ Animation linéaire
 
       CAT_SCALE: 2.5,
 
@@ -243,6 +274,20 @@
       HOVER_THRESHOLD: 3,
       NO_CLICKS_TO_SPAWN: 3,
     };
+
+    /* ✅ PHRASES TAQUINES (progressivement plus insistantes) */
+    const TEASING_PHRASES = [
+      "Oh... vraiment ? 🥺",
+      "Tu es sûr(e) ? Je suis adorable pourtant ! 😊",
+      "Allez, regarde ces petits chats... 🐱",
+      "Tu me brises le cœur là... 💔",
+      "Bon, les chats vont venir te convaincre ! 😼",
+      "Ils arrivent... prépare-toi ! 🐾",
+      "Tu résistes encore ? Impressionnant ! 😏",
+      "Les chats sont déçus de toi... 😿",
+      "C'est ton dernier mot ? 🤨",
+      "Je n'abandonnerai jamais ! 💪❤️"
+    ];
 
     /* ========================================================================
        VARIABLES GLOBALES
@@ -258,6 +303,7 @@
     const buttons = document.getElementById('buttons');
     const confirmation = document.getElementById('confirmation');
     const noCounter = document.getElementById('noCounter');
+    const teasingMessage = document.getElementById('teasingMessage');
 
     /* ========================================================================
        INITIALISATION
@@ -278,8 +324,8 @@
         buttons.style.display = 'none';
         confirmation.style.display = 'block';
         noCounter.style.display = 'none';
+        teasingMessage.style.display = 'none';
         
-        // ✅ Afficher le GIF après 500ms
         setTimeout(() => {
           document.getElementById('gifContainer').style.display = 'block';
         }, 500);
@@ -289,14 +335,23 @@
         cats = [];
       });
 
+      // ✅ Bouton "Non" avec phrases taquines
       btnNo.addEventListener('click', () => {
         noClickCount++;
-        noCounter.textContent = `"Non" cliqué : ${noClickCount} fois`;
+        
+        // Afficher phrase taquine
+        const phraseIndex = Math.min(noClickCount - 1, TEASING_PHRASES.length - 1);
+        teasingMessage.textContent = TEASING_PHRASES[phraseIndex];
+        teasingMessage.style.display = 'block';
+        
+        // Compteur
+        noCounter.textContent = `"Non" × ${noClickCount}`;
         noCounter.style.display = 'block';
 
+        // Spawn chats au 3e clic
         if (noClickCount >= CONFIG.NO_CLICKS_TO_SPAWN && !catsSpawned) {
           catsSpawned = true;
-          console.log(`🐱 Spawn après ${CONFIG.NO_CLICKS_TO_SPAWN} clics !`);
+          console.log(`🐱 Spawn des chats après ${CONFIG.NO_CLICKS_TO_SPAWN} clics !`);
           spawnCats();
           startAnimation();
         }
@@ -319,11 +374,13 @@
       const yMid = screenH * 0.5;
       const yBot = screenH * 0.8;
 
+      // Chats fixes (lignes idle 0-3)
       cats.push(createCat(screenW * 0.15, yTop, 'fixed', 'right', 0));
       cats.push(createCat(screenW * 0.85, yTop, 'fixed', 'left', 1));
       cats.push(createCat(screenW * 0.25, yBot, 'fixed', 'right', 2));
       cats.push(createCat(screenW * 0.75, yBot, 'fixed', 'left', 3));
 
+      // Chats mobiles (lignes walk 4-5)
       cats.push(createCat(screenW * 0.3, yMid, 'mobile', 'right', 4));
       cats.push(createCat(screenW * 0.7, yMid, 'mobile', 'left', 5));
     }
@@ -385,15 +442,19 @@
     }
 
     /* ========================================================================
-       ANIMATION PRINCIPALE
+       ANIMATION PRINCIPALE (✅ OPTIMISÉE SANS CLIGNOTEMENT)
        ======================================================================== */
     function startAnimation() {
       const frameDelay = 1000 / CONFIG.FPS;
+      let lastTime = performance.now();
 
-      function loop() {
+      function loop(currentTime) {
+        const deltaTime = currentTime - lastTime;
+
         cats.forEach(cat => {
           if (cat.markedForRemoval) return;
 
+          // Déplacement
           if (cat.type === 'fixed') {
             // Immobile
           } else if (cat.leaving) {
@@ -431,30 +492,18 @@
           }
 
           cat.el.style.left = `${cat.x}px`;
-          cat.el.style.top = `${cat.y}px`;
 
-          // ✅ Animation modifiée (linéaire si PINGPONG = false)
-          cat.frameTimer += 16;
+          // ✅ Animation frame (avec timestamp précis)
+          cat.frameTimer += deltaTime;
           if (cat.frameTimer >= frameDelay) {
-            cat.frameTimer = 0;
-            if (CONFIG.PINGPONG) {
-              cat.frame += cat.direction;
-              if (cat.frame >= CONFIG.FRAMES_PER_ROW - 1) {
-                cat.frame = CONFIG.FRAMES_PER_ROW - 1;
-                cat.direction = -1;
-              } else if (cat.frame <= 0) {
-                cat.frame = 0;
-                cat.direction = 1;
-              }
-            } else {
-              // Animation linéaire (loop)
-              cat.frame = (cat.frame + 1) % CONFIG.FRAMES_PER_ROW;
-            }
+            cat.frameTimer -= frameDelay; // Évite l'accumulation
+            cat.frame = (cat.frame + 1) % CONFIG.FRAMES_PER_ROW;
             applyFrame(cat);
           }
         });
 
         cats = cats.filter(c => !c.markedForRemoval);
+        lastTime = currentTime;
         animationFrameId = requestAnimationFrame(loop);
       }
 
