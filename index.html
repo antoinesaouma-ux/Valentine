@@ -134,6 +134,13 @@
       50% { transform: scale(1.03); opacity: 0.95; }
     }
 
+    /* ✅ VIBRATION DRAMATIQUE (pour le texte au 8e clic) */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+      20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+
     .buttons {
       display: flex;
       gap: 2rem;
@@ -154,6 +161,8 @@
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
       position: relative;
       overflow: hidden;
+      /* ✅ Origine de transformation au centre pour le grossissement */
+      transform-origin: center center;
     }
 
     button::before {
@@ -176,11 +185,16 @@
 
     #btnYes {
       background: var(--btn-yes-bg);
+      /* ✅ Transition améliorée pour le grossissement */
+      transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55), 
+                  box-shadow 0.3s ease,
+                  background 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     #btnYes:hover {
       background: var(--btn-yes-hover);
-      transform: scale(1.08) translateY(-2px);
+      /* ✅ Le hover s'adapte au scale actuel */
+      transform: scale(calc(var(--yes-scale, 1) * 1.05)) translateY(-2px) !important;
       box-shadow: 0 10px 30px rgba(184, 148, 82, 0.4);
     }
 
@@ -214,35 +228,41 @@
       50% { transform: scale(1.05); }
     }
 
+    /* ✅ MESSAGES DÉSESPÉRÉS - Style amélioré */
     #teasingMessage {
       position: absolute;
       top: 1.2rem;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(45, 52, 86, 0.8);
-      backdrop-filter: blur(10px);
-      padding: 0.9rem 1.8rem;
+      background: rgba(45, 52, 86, 0.9);
+      backdrop-filter: blur(12px);
+      padding: 1rem 2rem;
       border-radius: 12px;
-      font-size: clamp(0.85rem, 1.9vmin, 1.05rem);
+      font-size: clamp(0.9rem, 2vmin, 1.1rem);
       color: var(--accent-gold-bright);
       font-style: italic;
       display: none;
       max-width: 85%;
       text-align: center;
-      border: 1px solid rgba(184, 148, 82, 0.3);
-      animation: slideDown 0.4s ease-out;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(184, 148, 82, 0.4);
+      animation: fadeInScale 0.5s ease-out;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
       z-index: 15;
+      font-weight: 500;
     }
 
-    @keyframes slideDown {
-      from {
+    /* ✅ Animation d'apparition des messages */
+    @keyframes fadeInScale {
+      0% {
         opacity: 0;
-        transform: translateX(-50%) translateY(-15px);
+        transform: translateX(-50%) scale(0.8) translateY(-10px);
       }
-      to {
+      60% {
+        transform: translateX(-50%) scale(1.05) translateY(0);
+      }
+      100% {
         opacity: 1;
-        transform: translateX(-50%) translateY(0);
+        transform: translateX(-50%) scale(1) translateY(0);
       }
     }
 
@@ -367,24 +387,27 @@
       HOVER_THRESHOLD: 3,
       NO_CLICKS_TO_SPAWN: 3,
 
-      // ✅ MODE TAQUIN - Configuration
-      BTN_FLEE_RADIUS: 250,    // Distance de détection
-      BTN_FLEE_SPEED: 15,       // Vitesse de BASE (sera multipliée)
-      BTN_TAQUIN_MODE: true,   // Active/désactive le mode taquin
-    };
+      BTN_FLEE_RADIUS: 250,
+      BTN_FLEE_SPEED: 15,
+      BTN_TAQUIN_MODE: true,
 
-    const TEASING_PHRASES = [
-      "Oh... vraiment ? 🥺",
-      "Tu es sûre ? Je suis adorable pourtant ! ^^",
-      "Allez, regarde ces petits chats... 🐱",
-      "Certains chats ont peur des souris… tu avais deviné ?",
-      "est ce que tu te rend compte tu temps <br> que j'ai passé sur ces chats pour qu'ils ne te conviennent pas ?",
-      "Tu sais qu'a chaque fois que tu dis non un petit garçon a le coeur brisé ? ",
-      "Tu me brises le cœur là... 💔 ",
-      "Les chats sont déçus de toi... 😿",
-      "C'est ton dernier mot ? 🤨",
-      "Bon... tan pis je vais t'aider a te décider ! 😈"
-    ];
+      // ✅ MESSAGES DÉSESPÉRÉS PROGRESSIFS
+      DESPERATE_MESSAGES: [
+        "Vraiment ? 🥺",
+        "Tu es sûre ? Mon cœur... 💔",
+        "Les chats sont tristes maintenant... 😿",
+        "Même les étoiles pleurent... ⭐😢",
+        "Je vais devoir demander de l'aide aux chats... 🐱💭",
+        "Bon, intervention féline activée ! 🚨😼",
+        "Les chats te supplient... 😻🙏",
+        "Tu réalises que je vais pleurer ? 😭",
+        "Dernière chance avant le mode désespoir total... 💀",
+        "OK les chats arrivent pour te convaincre ! 🐱🐱🐱"
+      ],
+
+      // ✅ Facteur d'agrandissement du bouton "Oui" (+15% par clic)
+      YES_SCALE_INCREMENT: 0.15
+    };
 
     let cats = [];
     let mouseX = -9999, mouseY = -9999;
@@ -392,6 +415,7 @@
     let noClickCount = 0;
     let catsSpawned = false;
     let btnNoFleeing = false;
+    let yesScale = 1; // ✅ Échelle actuelle du bouton "Oui"
 
     const btnYes = document.getElementById('btnYes');
     const btnNo = document.getElementById('btnNo');
@@ -439,22 +463,55 @@
 
     function handleNoClick() {
       noClickCount++;
+      console.log(`👆 Clic sur Non : ${noClickCount}`);
       
-      const phraseIndex = Math.min(noClickCount - 1, TEASING_PHRASES.length - 1);
-      teasingMessage.innerHTML = TEASING_PHRASES[phraseIndex];
+      // ✅ 1) GROSSIR LE BOUTON "OUI" progressivement
+      yesScale = 1 + (noClickCount * CONFIG.YES_SCALE_INCREMENT);
+      btnYes.style.setProperty('--yes-scale', yesScale); // Pour le hover
+      btnYes.style.transform = `scale(${yesScale})`;
+      btnYes.style.transition = 'transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+      console.log(`💚 Bouton "Oui" agrandi : ×${yesScale.toFixed(2)}`);
+      
+      // ✅ 2) AFFICHER MESSAGE DÉSESPÉRÉ
+      const phraseIndex = Math.min(noClickCount - 1, CONFIG.DESPERATE_MESSAGES.length - 1);
+      teasingMessage.innerHTML = CONFIG.DESPERATE_MESSAGES[phraseIndex];
       teasingMessage.style.display = 'block';
       
-      noCounter.textContent = `"Non" × ${noClickCount}`;
-      noCounter.style.display = 'block';
+      // Réinitialiser l'animation
+      teasingMessage.style.animation = 'none';
+      setTimeout(() => {
+        teasingMessage.style.animation = 'fadeInScale 0.5s ease-out';
+      }, 10);
+      
+      // ✅ 3) COMPTEUR VISUEL (avant spawn des chats)
+      if (noClickCount < CONFIG.NO_CLICKS_TO_SPAWN) {
+        noCounter.textContent = `"Non" × ${noClickCount}/${CONFIG.NO_CLICKS_TO_SPAWN} avant les chats`;
+        noCounter.style.display = 'block';
+      } else {
+        noCounter.textContent = `"Non" × ${noClickCount}`;
+      }
 
-      if (noClickCount >= CONFIG.NO_CLICKS_TO_SPAWN && !catsSpawned) {
+      // ✅ 4) SPAWN DES CHATS au 3e clic
+      if (noClickCount === CONFIG.NO_CLICKS_TO_SPAWN && !catsSpawned) {
         catsSpawned = true;
-        console.log(`🐱 Spawn des chats après ${CONFIG.NO_CLICKS_TO_SPAWN} clics !`);
+        console.log('🐱 SPAWN DES CHATS !');
+        noCounter.style.display = 'none';
         spawnCats();
         startAnimation();
       }
 
-      if (noClickCount >= TEASING_PHRASES.length) {
+      // ✅ 5) VIBRATION DRAMATIQUE au 8e clic
+      if (noClickCount === 8) {
+        const romanticText = document.querySelector('.romantic-text');
+        romanticText.style.animation = 'shake 0.5s';
+        setTimeout(() => {
+          romanticText.style.animation = '';
+        }, 500);
+        console.log('📳 Texte vibre !');
+      }
+
+      // ✅ 6) BOUTON "NON" COMMENCE À FUIR au 10e clic
+      if (noClickCount === 10 && !btnNoFleeing) {
         activateFleeingButton();
       }
     }
@@ -485,18 +542,11 @@
           const dist = Math.sqrt(distX * distX + distY * distY);
           
           if (dist < CONFIG.BTN_FLEE_RADIUS) {
-            // ✅ MODE TAQUIN : Calcul de l'accélération
             let speed = CONFIG.BTN_FLEE_SPEED;
             
             if (CONFIG.BTN_TAQUIN_MODE) {
-              // Plus la souris est proche, plus le bouton accélère
-              const intensity = 1 - (dist / CONFIG.BTN_FLEE_RADIUS); // 0 (loin) à 1 (très proche)
-              speed = CONFIG.BTN_FLEE_SPEED * (1 + intensity * 2); // x1 à x3
-              
-              // Debug (optionnel)
-              if (Math.random() < 0.02) {
-                console.log(`🎯 Distance: ${dist.toFixed(0)}px | Intensité: ${intensity.toFixed(2)} | Vitesse: ${speed.toFixed(1)}px`);
-              }
+              const intensity = 1 - (dist / CONFIG.BTN_FLEE_RADIUS);
+              speed = CONFIG.BTN_FLEE_SPEED * (1 + intensity * 2);
             }
             
             const angle = Math.atan2(distY, distX);
@@ -512,7 +562,6 @@
             newX = Math.max(0, Math.min(newX, maxX));
             newY = Math.max(0, Math.min(newY, maxY));
             
-            // Téléportation si coincé
             if ((newX === 0 || newX === maxX) && (newY === 0 || newY === maxY)) {
               newX = Math.random() * maxX;
               newY = Math.random() * maxY;
