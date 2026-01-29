@@ -79,10 +79,9 @@
       position: relative;
       z-index: 10;
       border: 1px solid rgba(184, 148, 82, 0.2);
-      overflow: hidden; /* ✅ Empêche débordement */
+      overflow: hidden;
     }
 
-    /* Bordure dorée subtile */
     .card::before {
       content: '';
       position: absolute;
@@ -187,7 +186,7 @@
 
     #btnNo {
       background: var(--btn-no-bg);
-      transition: all 0.15s ease-out; /* ✅ Transition rapide pour fuite */
+      transition: all 0.15s ease-out;
     }
 
     #btnNo:hover {
@@ -195,7 +194,7 @@
     }
 
     #btnNo.fleeing {
-      position: fixed; /* ✅ Devient absolu pour bouger librement */
+      position: fixed;
       z-index: 9999;
     }
 
@@ -355,10 +354,9 @@
       WALK_ROWS: [4, 5],
       
       FPS: 8,
-      FPS_IDLE: 3, // ✅ FPS plus lent pour idle
-      PINGPONG: false,
+      FPS_IDLE: 3,
 
-      CAT_SCALE: 3.5, // ✅ Chats plus gros
+      CAT_SCALE: 3.5,
 
       FEAR_RADIUS: 200,
       FLEE_SPEED: 4.5,
@@ -369,22 +367,23 @@
       HOVER_THRESHOLD: 3,
       NO_CLICKS_TO_SPAWN: 3,
 
-      // ✅ Fuite du bouton "Non"
-      BTN_FLEE_RADIUS: 150,
-      BTN_FLEE_SPEED: 20,
+      // ✅ MODE TAQUIN - Configuration
+      BTN_FLEE_RADIUS: 150,    // Distance de détection
+      BTN_FLEE_SPEED: 8,       // Vitesse de BASE (sera multipliée)
+      BTN_TAQUIN_MODE: true,   // Active/désactive le mode taquin
     };
 
     const TEASING_PHRASES = [
       "Oh... vraiment ? 🥺",
-      "Tu es sûr(e) ? Je suis adorable pourtant ! 😊",
+      "Tu es sûre ? Je suis adorable pourtant ! ^^",
       "Allez, regarde ces petits chats... 🐱",
       "Tu me brises le cœur là... 💔",
-      "Bon, les chats vont venir te convaincre ! 😼",
-      "Ils arrivent... prépare-toi ! 🐾",
-      "Tu résistes encore ? Impressionnant ! 😏",
+      "est ce que tu te rend compte tu temps <br> que j'ai passé sur ces chats pour qu'ils ne te conviennent pas ?",
+      "Tu sais qu'a chaque fois que tu dis non un petit garçon a le coeur brisé ? ",
+      "Tu résistes encore ? Impressionnant ! ",
       "Les chats sont déçus de toi... 😿",
       "C'est ton dernier mot ? 🤨",
-      "Bon... tu ne m'attraperas plus ! 😈" // ✅ Dernier message = fuite
+      "Bon... tan pis je vais t'aider a te décider ! 😈"
     ];
 
     let cats = [];
@@ -435,14 +434,14 @@
         mouseY = e.clientY;
       });
 
-      startFleeingLoop(); // ✅ Boucle pour faire fuir le bouton
+      startFleeingLoop();
     }
 
     function handleNoClick() {
       noClickCount++;
       
       const phraseIndex = Math.min(noClickCount - 1, TEASING_PHRASES.length - 1);
-      teasingMessage.textContent = TEASING_PHRASES[phraseIndex];
+      teasingMessage.innerHTML = TEASING_PHRASES[phraseIndex];
       teasingMessage.style.display = 'block';
       
       noCounter.textContent = `"Non" × ${noClickCount}`;
@@ -455,7 +454,6 @@
         startAnimation();
       }
 
-      // ✅ Au dernier message : bouton fuit
       if (noClickCount >= TEASING_PHRASES.length) {
         activateFleeingButton();
       }
@@ -467,13 +465,12 @@
       btnNo.style.position = 'fixed';
       btnNo.style.zIndex = '9999';
       
-      // Position initiale aléatoire
       const rect = btnNo.getBoundingClientRect();
       btnNo.style.left = `${rect.left}px`;
       btnNo.style.top = `${rect.top}px`;
       btnNo.style.transform = 'none';
       
-      console.log('🏃 Bouton "Non" en mode fuite !');
+      console.log('🏃 Bouton "Non" en mode fuite TAQUIN !');
     }
 
     function startFleeingLoop() {
@@ -488,15 +485,27 @@
           const dist = Math.sqrt(distX * distX + distY * distY);
           
           if (dist < CONFIG.BTN_FLEE_RADIUS) {
-            // Fuit dans la direction opposée
+            // ✅ MODE TAQUIN : Calcul de l'accélération
+            let speed = CONFIG.BTN_FLEE_SPEED;
+            
+            if (CONFIG.BTN_TAQUIN_MODE) {
+              // Plus la souris est proche, plus le bouton accélère
+              const intensity = 1 - (dist / CONFIG.BTN_FLEE_RADIUS); // 0 (loin) à 1 (très proche)
+              speed = CONFIG.BTN_FLEE_SPEED * (1 + intensity * 2); // x1 à x3
+              
+              // Debug (optionnel)
+              if (Math.random() < 0.02) {
+                console.log(`🎯 Distance: ${dist.toFixed(0)}px | Intensité: ${intensity.toFixed(2)} | Vitesse: ${speed.toFixed(1)}px`);
+              }
+            }
+            
             const angle = Math.atan2(distY, distX);
-            const fleeX = -Math.cos(angle) * CONFIG.BTN_FLEE_SPEED;
-            const fleeY = -Math.sin(angle) * CONFIG.BTN_FLEE_SPEED;
+            const fleeX = -Math.cos(angle) * speed;
+            const fleeY = -Math.sin(angle) * speed;
             
             let newX = rect.left + fleeX;
             let newY = rect.top + fleeY;
             
-            // Contraintes écran
             const maxX = window.innerWidth - rect.width;
             const maxY = window.innerHeight - rect.height;
             
@@ -507,6 +516,7 @@
             if ((newX === 0 || newX === maxX) && (newY === 0 || newY === maxY)) {
               newX = Math.random() * maxX;
               newY = Math.random() * maxY;
+              console.log('📍 Bouton téléporté !');
             }
             
             btnNo.style.left = `${newX}px`;
@@ -590,7 +600,7 @@
 
     function startAnimation() {
       const frameDelay = 1000 / CONFIG.FPS;
-      const idleFrameDelay = 1000 / CONFIG.FPS_IDLE; // ✅ Idle plus lent
+      const idleFrameDelay = 1000 / CONFIG.FPS_IDLE;
       let lastTime = performance.now();
 
       function loop(currentTime) {
@@ -600,11 +610,10 @@
           if (cat.markedForRemoval) return;
 
           if (cat.type === 'fixed') {
-            // ✅ Animation idle douce (respiration)
             cat.frameTimer += deltaTime;
             if (cat.frameTimer >= idleFrameDelay) {
               cat.frameTimer -= idleFrameDelay;
-              cat.frame = (cat.frame + 1) % 4; // Seulement 4 premières frames
+              cat.frame = (cat.frame + 1) % 4;
               applyFrame(cat);
             }
           } else if (cat.leaving) {
@@ -643,7 +652,6 @@
 
           cat.el.style.left = `${cat.x}px`;
 
-          // Animation normale pour mobiles
           if (cat.type === 'mobile') {
             cat.frameTimer += deltaTime;
             if (cat.frameTimer >= frameDelay) {
