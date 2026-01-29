@@ -1,319 +1,547 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8" />
-<title>💖</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Veux-tu être ma Valentine ? 💕</title>
+  <!--
+    ╔═══════════════════════════════════════════════════════════════════════════╗
+    ║  CARTE INTERACTIVE "VALENTINE" AVEC CHATS ANIMÉS                          ║
+    ╠═══════════════════════════════════════════════════════════════════════════╣
+    ║  COMPORTEMENTS PRINCIPAUX :                                               ║
+    ║  • Carte carrée centrée avec 2 lignes romantiques inspirées de Cyrano     ║
+    ║  • Boutons Oui/Non : "Oui" → confirmation ; "Non" → compteur              ║
+    ║  • Au 3ᵉ clic sur "Non" : spawn de chats animés par sprite-sheet         ║
+    ║  • Chats : animation ping-pong, fuite de la souris (axe X uniquement)     ║
+    ║  • Après 3 survols d'un chat : il part hors écran en marchant             ║
+    ╠═══════════════════════════════════════════════════════════════════════════╣
+    ║  MODIFICATIONS RAPIDES :                                                  ║
+    ║  → Section CONFIG (ligne ~80) : chemins, dimensions sprite, vitesses      ║
+    ║  → Section CSS :root (ligne ~40) : couleurs, tailles, échelle des chats   ║
+    ║  → Chemin sprite par défaut : images/cat.png                              ║
+    ╚═══════════════════════════════════════════════════════════════════════════╝
+  -->
+  <style>
+    /* ========================================================================
+       VARIABLES CSS GLOBALES (modifiables facilement)
+       ======================================================================== */
+    :root {
+      --card-size: min(90vmin, 600px); /* Carte carrée responsive */
+      --card-bg: linear-gradient(135deg, #ffeef8 0%, #ffe0f0 100%);
+      --card-shadow: 0 20px 60px rgba(255, 105, 180, 0.3);
+      --text-color: #d63384;
+      --btn-yes-bg: #28a745;
+      --btn-yes-hover: #218838;
+      --btn-no-bg: #dc3545;
+      --btn-no-hover: #c82333;
+      --font-romantic: 'Georgia', 'Palatino', serif;
+    }
 
-<style>
-/* =====================================================
-   GLOBAL – MODERNE / CLEAN
-   ===================================================== */
+    /* Reset & Body */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-:root {
-  --glass-bg: rgba(255,255,255,0.75);
-  --glass-border: rgba(255,255,255,0.35);
-  --accent: #ff4d6d;
-}
+    body {
+      font-family: var(--font-romantic);
+      background: linear-gradient(to bottom, #fff5f7, #ffe4e9);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden; /* Empêche scroll lors du mouvement des chats */
+      position: relative;
+    }
 
-* {
-  box-sizing: border-box;
-}
+    /* ========================================================================
+       CARTE CARRÉE CENTRALE
+       ======================================================================== */
+    .card {
+      width: var(--card-size);
+      height: var(--card-size);
+      background: var(--card-bg);
+      border-radius: 20px;
+      box-shadow: var(--card-shadow);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem;
+      text-align: center;
+      position: relative;
+      z-index: 10; /* Au-dessus des chats */
+      border: 3px solid rgba(255, 182, 193, 0.6);
+    }
 
-html, body {
-  margin: 0;
-  height: 100%;
-  font-family: "Inter", "Segoe UI", sans-serif;
-  background: radial-gradient(circle at top, #fef1f4, #f7cbd3);
-  overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+    /* Texte romantique inspiré de Cyrano */
+    .romantic-text {
+      font-size: clamp(1rem, 2.5vmin, 1.4rem);
+      line-height: 1.6;
+      color: var(--text-color);
+      font-style: italic;
+      margin-bottom: 1.5rem;
+      max-width: 80%;
+    }
 
-/* =====================================================
-   FOND – POUSSIÈRE + PARALLAXE
-   ===================================================== */
+    .romantic-text p {
+      margin-bottom: 1rem;
+    }
 
-#dust {
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-}
+    .romantic-text .question {
+      font-weight: bold;
+      font-size: clamp(1.2rem, 3vmin, 1.8rem);
+      font-style: normal;
+      margin-top: 1.5rem;
+      color: #c2185b;
+    }
 
-#parallax {
-  position: fixed;
-  inset: -10%;
-  background: radial-gradient(circle at center, rgba(255,255,255,0.35), transparent 60%);
-  z-index: -1;
-  transition: transform 0.15s ease-out;
-}
+    /* ========================================================================
+       BOUTONS OUI / NON
+       ======================================================================== */
+    .buttons {
+      display: flex;
+      gap: 2rem;
+      margin-top: 2rem;
+    }
 
-/* =====================================================
-   CARTE
-   ===================================================== */
+    button {
+      padding: 1rem 2.5rem;
+      font-size: clamp(1rem, 2.5vmin, 1.3rem);
+      font-family: var(--font-romantic);
+      font-weight: bold;
+      color: white;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    }
 
-.card {
-  width: min(90vmin, 420px);
-  aspect-ratio: 1 / 1;
-  padding: 28px;
-  border-radius: 22px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(18px);
-  border: 1px solid var(--glass-border);
-  box-shadow: 0 30px 60px rgba(0,0,0,0.15);
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-}
+    button:focus {
+      outline: 3px solid rgba(255, 255, 255, 0.8);
+      outline-offset: 4px;
+    }
 
-/* =====================================================
-   TEXTE
-   ===================================================== */
+    #btnYes {
+      background: var(--btn-yes-bg);
+    }
 
-.card p {
-  margin: 0 0 14px;
-  font-size: 1.15rem;
-  color: #222;
-}
+    #btnYes:hover {
+      background: var(--btn-yes-hover);
+      transform: scale(1.1) rotate(-2deg);
+    }
 
-.card p:first-child {
-  font-style: italic;
-  opacity: 0.85;
-}
+    #btnNo {
+      background: var(--btn-no-bg);
+    }
 
-.card strong {
-  font-size: 1.25rem;
-}
+    #btnNo:hover {
+      background: var(--btn-no-hover);
+      transform: scale(1.05);
+    }
 
-/* =====================================================
-   BOUTONS
-   ===================================================== */
+    /* Message de confirmation (état "Oui" cliqué) */
+    .confirmation {
+      display: none;
+      font-size: clamp(1.5rem, 4vmin, 2.5rem);
+      color: #28a745;
+      font-weight: bold;
+      animation: heartbeat 1s infinite;
+    }
 
-.buttons {
-  margin-top: 26px;
-}
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
 
-button {
-  padding: 12px 26px;
-  border-radius: 999px;
-  border: none;
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: 500;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
+    /* Compteur de clics "Non" (facultatif visuel) */
+    #noCounter {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: rgba(220, 53, 69, 0.2);
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      color: var(--text-color);
+      display: none; /* Devient visible après 1er clic "Non" */
+    }
 
-button:hover {
-  transform: translateY(-1px);
-}
+    /* ========================================================================
+       CHATS ANIMÉS (sprite-sheet)
+       ======================================================================== */
+    .cat {
+      position: fixed;
+      /* Dimensions calculées dynamiquement via CAT_SCALE × FRAME_W/H */
+      width: calc(64px * 1.5); /* Valeur par défaut, sera mise à jour par JS */
+      height: calc(64px * 1.5);
+      background-image: url('images/cat.png'); /* ← CHEMIN PAR DÉFAUT */
+      background-repeat: no-repeat;
+      background-size: calc(8 * 64px * 1.5) auto; /* 8 frames/row × FRAME_W × scale */
+      image-rendering: pixelated; /* Style pixel-art si approprié */
+      pointer-events: auto;
+      z-index: 5; /* Sous la carte */
+      transition: none; /* Pas de transition CSS, animé via JS */
+    }
 
-#yesBtn {
-  background: var(--accent);
-  color: #fff;
-  box-shadow: 0 8px 20px rgba(255,77,109,0.35);
-}
+    /* Flip horizontal pour direction gauche */
+    .cat.face-left {
+      transform: scaleX(-1);
+    }
 
-#noBtn {
-  background: #e0e0e0;
-  color: #333;
-  margin-left: 12px;
-}
-
-/* =====================================================
-   LOVE MOCHI (OUI)
-   ===================================================== */
-
-.love {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-}
-
-.love img {
-  max-width: 70%;
-  border-radius: 16px;
-}
-
-/* =====================================================
-   CHATS (SPRITE SHEET)
-   ===================================================== */
-
-.cat {
-  position: absolute;
-  width: calc(var(--fw) * var(--scale));
-  height: calc(var(--fh) * var(--scale));
-  background-image: url("image/cat.png"); /* ✅ sprite ici */
-  background-repeat: no-repeat;
-  image-rendering: pixelated;
-}
-</style>
+    .cat.face-right {
+      transform: scaleX(1);
+    }
+  </style>
 </head>
-
 <body>
 
-<canvas id="dust"></canvas>
-<div id="parallax"></div>
-
-<div class="card" id="card">
-  <p>Je t’aime non pour ce que tu es, mais pour ce que je deviens quand je suis avec toi.</p>
-  <p><strong>Veux-tu être ma Valentine&nbsp;?</strong></p>
-
-  <div class="buttons" id="buttons">
-    <button id="yesBtn">Oui</button>
-    <button id="noBtn">Non</button>
-  </div>
-</div>
-
-<script>
-/* =====================================================
-   CONFIG CHATS
-   ===================================================== */
-const FRAME_W = 64;
-const FRAME_H = 64;
-const FRAMES_PER_ROW = 8;
-const TOTAL_FRAMES = 16;
-const FPS = 10;
-const SCALE = 1.4;
-
-const FEAR_RADIUS = 150;
-const WALK_SPEED = 1;
-const FLEE_SPEED = 3;
-
-/* ===================================================== */
-
-document.documentElement.style.setProperty("--fw", FRAME_W + "px");
-document.documentElement.style.setProperty("--fh", FRAME_H + "px");
-document.documentElement.style.setProperty("--scale", SCALE);
-
-const card = document.getElementById("card");
-const yesBtn = document.getElementById("yesBtn");
-const noBtn = document.getElementById("noBtn");
-const buttons = document.getElementById("buttons");
-
-let noCount = 0;
-let catsSpawned = false;
-let mouseX = 0;
-
-window.addEventListener("mousemove", e => mouseX = e.clientX);
-
-/* ===================== PARALLAXE ===================== */
-const parallax = document.getElementById("parallax");
-window.addEventListener("mousemove", e => {
-  const x = (e.clientX / innerWidth - 0.5) * 18;
-  const y = (e.clientY / innerHeight - 0.5) * 18;
-  parallax.style.transform = `translate(${x}px, ${y}px)`;
-});
-
-/* ===================== OUI ===================== */
-yesBtn.onclick = () => {
-  card.innerHTML = `
-    <div class="love">
-      <img src="image/love-mochi.gif" alt="Love Mochi">
-      <strong>Oui 💖</strong>
+  <!-- ========================================================================
+       CARTE PRINCIPALE
+       ======================================================================== -->
+  <div class="card" id="card">
+    <div class="romantic-text">
+      <p>
+        « Je t'aime non pour ce que tu es,<br>
+        mais pour ce que je suis quand je suis avec toi. »
+      </p>
+      <p class="question">
+        Veux‑tu être ma Valentine ? 💕
+      </p>
     </div>
-  `;
-};
 
-/* ===================== NON ===================== */
-noBtn.onclick = () => {
-  noCount++;
-  if (noCount >= 3 && !catsSpawned) {
-    spawnCats();
-    catsSpawned = true;
-  }
-};
+    <div class="buttons" id="buttons">
+      <button id="btnYes">Oui ❤️</button>
+      <button id="btnNo">Non</button>
+    </div>
 
-/* ===================== CHATS ===================== */
-const cats = [];
+    <div class="confirmation" id="confirmation">
+      Oui ! ❤️✨
+    </div>
 
-function spawnCats() {
-  ["20%", "50%", "80%"].forEach((top, i) => {
-    const el = document.createElement("div");
-    el.className = "cat";
-    el.style.top = top;
-    el.style.left = "20px";
+    <div id="noCounter"></div>
+  </div>
 
-    const c = {
-      el,
-      x: 20,
-      frame: 0,
-      dir: 1,
-      mobile: i === 1
+  <!-- ========================================================================
+       SCRIPT PRINCIPAL
+       ======================================================================== -->
+  <script>
+    'use strict';
+
+    /* ========================================================================
+       █████████████████████████████████████████████████████████████████████
+       ███                      SECTION CONFIG                            ███
+       ███  → MODIFIE ICI tous les paramètres (sprite, tailles, vitesses) ███
+       █████████████████████████████████████████████████████████████████████
+       ======================================================================== */
+
+    const CONFIG = {
+      // ──────────────────────────────────────────────────────────────────────
+      // SPRITE-SHEET (chemin et dimensions)
+      // ──────────────────────────────────────────────────────────────────────
+      CAT_SRC: 'images/cat.png',        // ← Chemin vers la sprite-sheet
+      FRAME_W: 64,                      // Largeur d'une frame (px)
+      FRAME_H: 64,                      // Hauteur d'une frame (px)
+      FRAMES_PER_ROW: 8,                // Nombre de frames par ligne
+      TOTAL_FRAMES: 16,                 // Nombre total de frames dans la sheet
+      FPS: 10,                          // Images par seconde de l'animation
+      PINGPONG: true,                   // true = aller/retour ; false = boucle simple
+
+      // ──────────────────────────────────────────────────────────────────────
+      // AFFICHAGE & ÉCHELLE
+      // ──────────────────────────────────────────────────────────────────────
+      CAT_SCALE: 1.5,                   // Multiplie FRAME_W/H pour taille affichée
+
+      // ──────────────────────────────────────────────────────────────────────
+      // COMPORTEMENT : FUITE DE LA SOURIS
+      // ──────────────────────────────────────────────────────────────────────
+      FEAR_RADIUS: 160,                 // Distance (px X) à partir de laquelle le chat fuit
+      FLEE_SPEED: 3.0,                  // Vitesse de fuite (px/frame)
+      WALK_SPEED: 1.1,                  // Vitesse de marche normale (ping-pong)
+      PANIC_SPEED: 4.0,                 // Vitesse max en panique (si besoin)
+
+      // ──────────────────────────────────────────────────────────────────────
+      // SORTIE D'ÉCRAN & RESPAWN
+      // ──────────────────────────────────────────────────────────────────────
+      OFFSCREEN_MARGIN: 200,            // Marge hors écran avant suppression
+      HOVER_THRESHOLD: 3,               // Nb de survols avant qu'un chat "parte"
+
+      // ──────────────────────────────────────────────────────────────────────
+      // DÉCLENCHEUR : SPAWN DES CHATS APRÈS 3 CLICS SUR "NON"
+      // ──────────────────────────────────────────────────────────────────────
+      NO_CLICKS_TO_SPAWN: 3,            // Nb de clics sur "Non" avant spawn
     };
 
-    card.appendChild(el);
-    cats.push(c);
-  });
+    /* ========================================================================
+       VARIABLES GLOBALES
+       ======================================================================== */
+    let cats = [];                      // Tableau des chats spawned
+    let mouseX = -9999, mouseY = -9999; // Position souris (initialisée hors écran)
+    let animationFrameId = null;        // ID de requestAnimationFrame
+    let noClickCount = 0;               // Compteur clics sur "Non"
+    let catsSpawned = false;            // Flag : les chats sont-ils apparus ?
 
-  requestAnimationFrame(animateCats);
-}
+    // Références DOM
+    const btnYes = document.getElementById('btnYes');
+    const btnNo = document.getElementById('btnNo');
+    const buttons = document.getElementById('buttons');
+    const confirmation = document.getElementById('confirmation');
+    const noCounter = document.getElementById('noCounter');
+    const card = document.getElementById('card');
 
-let last = 0;
-function animateCats(t) {
-  if (t - last > 1000 / FPS) {
-    cats.forEach(c => {
-      if (c.mobile) {
-        const d = Math.abs(mouseX - (card.offsetLeft + c.x));
-        c.x += d < FEAR_RADIUS
-          ? (mouseX < card.offsetLeft + c.x ? FLEE_SPEED : -FLEE_SPEED)
-          : WALK_SPEED * c.dir;
+    /* ========================================================================
+       INITIALISATION : ÉCOUTEURS & SPRITE PRELOAD
+       ======================================================================== */
+    function init() {
+      // Preload sprite-sheet
+      const img = new Image();
+      img.src = CONFIG.CAT_SRC;
+      img.onload = () => {
+        console.log(`✅ Sprite-sheet chargée : ${CONFIG.CAT_SRC}`);
+      };
+      img.onerror = () => {
+        console.error(`❌ ERREUR : impossible de charger ${CONFIG.CAT_SRC}`);
+        alert(`⚠️ Sprite manquante !\nPlace ton fichier dans : ${CONFIG.CAT_SRC}`);
+      };
+
+      // Bouton "Oui" : afficher confirmation et stopper interactions
+      btnYes.addEventListener('click', () => {
+        buttons.style.display = 'none';
+        confirmation.style.display = 'block';
+        noCounter.style.display = 'none';
+        // Optionnel : arrêter animation des chats
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        // Retirer les chats du DOM
+        cats.forEach(cat => cat.el.remove());
+        cats = [];
+      });
+
+      // Bouton "Non" : incrémenter compteur, spawn au 3ᵉ clic
+      btnNo.addEventListener('click', () => {
+        noClickCount++;
+        noCounter.textContent = `"Non" cliqué : ${noClickCount} fois`;
+        noCounter.style.display = 'block';
+
+        if (noClickCount >= CONFIG.NO_CLICKS_TO_SPAWN && !catsSpawned) {
+          catsSpawned = true;
+          console.log(`🐱 Spawn des chats après ${CONFIG.NO_CLICKS_TO_SPAWN} clics "Non"`);
+          spawnCats();
+          startAnimation();
+        }
+      });
+
+      // Tracking souris (global)
+      document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      });
+    }
+
+    /* ========================================================================
+       SPAWN DES CHATS (3 lignes : haut, milieu, bas)
+       ======================================================================== */
+    function spawnCats() {
+      const screenW = window.innerWidth;
+      const screenH = window.innerHeight;
+      const catW = CONFIG.FRAME_W * CONFIG.CAT_SCALE;
+      const catH = CONFIG.FRAME_H * CONFIG.CAT_SCALE;
+
+      // Lignes Y fixes (haut = 20%, milieu = 50%, bas = 80%)
+      const yTop = screenH * 0.2;
+      const yMid = screenH * 0.5;
+      const yBot = screenH * 0.8;
+
+      // ──────────────────────────────────────────────────────────────────────
+      // CHATS FIXES (haut et bas) : ne bougent pas, ne fuient pas
+      // ──────────────────────────────────────────────────────────────────────
+      cats.push(createCat(screenW * 0.15, yTop, 'fixed', 'right'));
+      cats.push(createCat(screenW * 0.85, yTop, 'fixed', 'left'));
+      cats.push(createCat(screenW * 0.25, yBot, 'fixed', 'right'));
+      cats.push(createCat(screenW * 0.75, yBot, 'fixed', 'left'));
+
+      // ──────────────────────────────────────────────────────────────────────
+      // CHATS MOBILES (milieu) : ping-pong horizontal, fuient la souris
+      // ──────────────────────────────────────────────────────────────────────
+      cats.push(createCat(screenW * 0.3, yMid, 'mobile', 'right'));
+      cats.push(createCat(screenW * 0.7, yMid, 'mobile', 'left'));
+    }
+
+    /* ========================================================================
+       CRÉATION D'UN CHAT (objet + élément DOM)
+       ======================================================================== */
+    function createCat(x, y, type, facing) {
+      const el = document.createElement('div');
+      el.className = 'cat';
+      el.style.width = `${CONFIG.FRAME_W * CONFIG.CAT_SCALE}px`;
+      el.style.height = `${CONFIG.FRAME_H * CONFIG.CAT_SCALE}px`;
+      el.style.backgroundSize = `${CONFIG.FRAMES_PER_ROW * CONFIG.FRAME_W * CONFIG.CAT_SCALE}px auto`;
+      el.style.left = `${x}px`;
+      el.style.top = `${y}px`;
+      document.body.appendChild(el);
+
+      const cat = {
+        el,                         // Element DOM
+        x, y,                       // Position
+        vx: 0,                      // Vélocité X (mouvement)
+        type,                       // 'fixed' ou 'mobile'
+        facing,                     // 'left' ou 'right'
+        frame: 0,                   // Frame actuelle (0..TOTAL_FRAMES-1)
+        frameTimer: 0,              // Timer pour FPS
+        direction: 1,               // +1 (forward) ou -1 (backward) pour ping-pong
+        hoverCount: 0,              // Nb de survols (mouseenter)
+        leaving: false,             // true = en train de partir hors écran
+        markedForRemoval: false,    // true = à supprimer du tableau
+      };
+
+      // Initialiser direction pour mobiles
+      if (type === 'mobile') {
+        cat.vx = (facing === 'right') ? CONFIG.WALK_SPEED : -CONFIG.WALK_SPEED;
       }
 
-      if (c.x < 0 || c.x > card.clientWidth - FRAME_W * SCALE) {
-        c.dir *= -1;
+      // Événement mouseenter : incrémenter hoverCount
+      el.addEventListener('mouseenter', () => {
+        if (cat.type === 'mobile' && !cat.leaving) {
+          cat.hoverCount++;
+          console.log(`🐱 Chat survolé ${cat.hoverCount}/${CONFIG.HOVER_THRESHOLD}`);
+          if (cat.hoverCount >= CONFIG.HOVER_THRESHOLD) {
+            cat.leaving = true;
+            console.log('🐱 Chat part hors écran !');
+            // Choisir direction de sortie (vers bord le plus proche)
+            cat.vx = (cat.x < window.innerWidth / 2) ? -CONFIG.PANIC_SPEED : CONFIG.PANIC_SPEED;
+            cat.facing = (cat.vx > 0) ? 'right' : 'left';
+            setFacing(cat);
+          }
+        }
+      });
+
+      setFacing(cat);
+      applyFrame(cat);
+
+      return cat;
+    }
+
+    /* ========================================================================
+       ANIMATION PRINCIPALE (requestAnimationFrame)
+       ======================================================================== */
+    function startAnimation() {
+      const frameDelay = 1000 / CONFIG.FPS;
+
+      function loop(timestamp) {
+        cats.forEach(cat => {
+          if (cat.markedForRemoval) return;
+
+          // ────────────────────────────────────────────────────────────────
+          // 1) COMPORTEMENT : fixed vs mobile vs leaving
+          // ────────────────────────────────────────────────────────────────
+          if (cat.type === 'fixed') {
+            // Aucun mouvement, juste animation sur place
+          } else if (cat.leaving) {
+            // Part hors écran en ligne droite
+            cat.x += cat.vx;
+            // Vérifier si hors écran
+            const margin = CONFIG.OFFSCREEN_MARGIN;
+            if (cat.x < -margin || cat.x > window.innerWidth + margin) {
+              cat.markedForRemoval = true;
+              cat.el.remove();
+              console.log('🐱 Chat supprimé (hors écran)');
+              return;
+            }
+          } else {
+            // Mobile : fuite souris OU ping-pong
+            const distX = Math.abs(mouseX - cat.x);
+            if (distX < CONFIG.FEAR_RADIUS) {
+              // FUITE : s'éloigner de la souris (axe X uniquement)
+              const flee = (cat.x < mouseX) ? -CONFIG.FLEE_SPEED : CONFIG.FLEE_SPEED;
+              cat.vx = flee;
+              cat.facing = (flee > 0) ? 'right' : 'left';
+              setFacing(cat);
+              cat.x += cat.vx;
+            } else {
+              // PING-PONG : marche normale avec rebonds
+              cat.x += cat.vx;
+              const catW = CONFIG.FRAME_W * CONFIG.CAT_SCALE;
+              if (cat.x <= 0) {
+                cat.x = 0;
+                cat.vx = CONFIG.WALK_SPEED;
+                cat.facing = 'right';
+                setFacing(cat);
+              } else if (cat.x >= window.innerWidth - catW) {
+                cat.x = window.innerWidth - catW;
+                cat.vx = -CONFIG.WALK_SPEED;
+                cat.facing = 'left';
+                setFacing(cat);
+              }
+            }
+          }
+
+          // ────────────────────────────────────────────────────────────────
+          // 2) MISE À JOUR POSITION DOM
+          // ────────────────────────────────────────────────────────────────
+          cat.el.style.left = `${cat.x}px`;
+          cat.el.style.top = `${cat.y}px`;
+
+          // ────────────────────────────────────────────────────────────────
+          // 3) ANIMATION SPRITE (ping-pong frames)
+          // ────────────────────────────────────────────────────────────────
+          cat.frameTimer += 16; // ~16ms par frame (60fps)
+          if (cat.frameTimer >= frameDelay) {
+            cat.frameTimer = 0;
+            if (CONFIG.PINGPONG) {
+              cat.frame += cat.direction;
+              if (cat.frame >= CONFIG.TOTAL_FRAMES - 1) {
+                cat.frame = CONFIG.TOTAL_FRAMES - 1;
+                cat.direction = -1; // Retour arrière
+              } else if (cat.frame <= 0) {
+                cat.frame = 0;
+                cat.direction = 1; // Repartir en avant
+              }
+            } else {
+              cat.frame = (cat.frame + 1) % CONFIG.TOTAL_FRAMES;
+            }
+            applyFrame(cat);
+          }
+        });
+
+        // Nettoyer les chats marqués pour suppression
+        cats = cats.filter(c => !c.markedForRemoval);
+
+        animationFrameId = requestAnimationFrame(loop);
       }
 
-      c.el.style.left = c.x + "px";
+      animationFrameId = requestAnimationFrame(loop);
+    }
 
-      c.frame += c.dir;
-      if (c.frame >= TOTAL_FRAMES || c.frame < 0) c.dir *= -1;
+    /* ========================================================================
+       HELPERS : GESTION SPRITE & FACING
+       ======================================================================== */
 
-      const fx = (c.frame % FRAMES_PER_ROW) * FRAME_W;
-      const fy = Math.floor(c.frame / FRAMES_PER_ROW) * FRAME_H;
-      c.el.style.backgroundPosition = `-${fx}px -${fy}px`;
-      c.el.style.transform = c.dir < 0 ? "scaleX(-1)" : "scaleX(1)";
-    });
-    last = t;
-  }
-  requestAnimationFrame(animateCats);
-}
+    // Appliquer la frame actuelle au background-position
+    function applyFrame(cat) {
+      const row = Math.floor(cat.frame / CONFIG.FRAMES_PER_ROW);
+      const col = cat.frame % CONFIG.FRAMES_PER_ROW;
+      const offsetX = -col * CONFIG.FRAME_W * CONFIG.CAT_SCALE;
+      const offsetY = -row * CONFIG.FRAME_H * CONFIG.CAT_SCALE;
+      cat.el.style.backgroundPosition = `${offsetX}px ${offsetY}px`;
+    }
 
-/* ===================== POUSSIÈRE ===================== */
-const canvas = document.getElementById("dust");
-const ctx = canvas.getContext("2d");
-let w, h, particles = [];
+    // Appliquer la classe CSS pour flip horizontal (facing)
+    function setFacing(cat) {
+      if (cat.facing === 'left') {
+        cat.el.classList.add('face-left');
+        cat.el.classList.remove('face-right');
+      } else {
+        cat.el.classList.add('face-right');
+        cat.el.classList.remove('face-left');
+      }
+    }
 
-function resize() {
-  w = canvas.width = innerWidth;
-  h = canvas.height = innerHeight;
-}
-window.addEventListener("resize", resize);
-resize();
-
-for (let i = 0; i < 80; i++) {
-  particles.push({
-    x: Math.random() * w,
-    y: Math.random() * h,
-    r: Math.random() * 1.6 + 0.4,
-    v: Math.random() * 0.3 + 0.1
-  });
-}
-
-function dust() {
-  ctx.clearRect(0, 0, w, h);
-  ctx.fillStyle = "rgba(255,255,255,0.6)";
-  particles.forEach(p => {
-    p.y -= p.v;
-    if (p.y < 0) p.y = h;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-    ctx.fill();
-  });
-  requestAnimationFrame(dust);
-}
-dust();
-</script>
+    /* ========================================================================
+       DÉMARRAGE
+       ======================================================================== */
+    init();
+  </script>
 
 </body>
 </html>
