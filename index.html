@@ -437,7 +437,7 @@
       SHOOTING_STAR_INTERVAL: 12000,
 
       NO_CLICKS_TO_HIDE: 11, // ✅ AJOUTÉ
-      YES_MAGNET_SPEED: 0.015, // ✅ AJOUTÉ
+      YES_MAGNET_SPEED: 0.08, // ✅ AJOUTÉ
     };
 
     const TEASING_PHRASES = [
@@ -564,7 +564,8 @@ function handleNoClick() {
     btnNo.style.pointerEvents = 'none';
     
     // Agrandir le bouton "Oui" (+30%)
-    btnYes.style.transform = 'scale(2.18)'; // 11 × 0.08 = 0.88 + 1 = 1.88 × 1.3 ≈ 2.44
+    btnYes.dataset.scale = '1.35';
+    btnYes.style.transform = 'scale(1.35)';
     btnYes.style.transition = 'transform 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
     
     // Centrer le bouton "Oui"
@@ -646,30 +647,40 @@ function attractYesButton() {
     requestAnimationFrame(attractYesButton);
     return;
   }
-  
+
   const rect = btnYes.getBoundingClientRect();
-  const btnCenterX = rect.left + rect.width / 2;
-  const btnCenterY = rect.top + rect.height / 2;
-  
-  const deltaX = mouseX - btnCenterX;
-  const deltaY = mouseY - btnCenterY;
-  
-  const currentTransform = btnYes.style.transform || '';
-  const scaleMatch = currentTransform.match(/scale\(([^)]+)\)/);
-  const currentScale = scaleMatch ? scaleMatch[1] : '1';
-  
-  const currentX = parseFloat(btnYes.style.getPropertyValue('--offset-x') || '0');
-  const currentY = parseFloat(btnYes.style.getPropertyValue('--offset-y') || '0');
-  
-  const newX = currentX + deltaX * CONFIG.YES_MAGNET_SPEED;
-  const newY = currentY + deltaY * CONFIG.YES_MAGNET_SPEED;
-  
-  btnYes.style.setProperty('--offset-x', newX);
-  btnYes.style.setProperty('--offset-y', newY);
-  btnYes.style.transform = `scale(${currentScale}) translate(${newX}px, ${newY}px)`;
-  
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+
+  const dx = mouseX - centerX;
+  const dy = mouseY - centerY;
+
+  const max = CONFIG.YES_MAX_OFFSET;
+
+  const targetX = Math.max(-max, Math.min(dx, max));
+  const targetY = Math.max(-max, Math.min(dy, max));
+
+  const currentX = parseFloat(btnYes.dataset.offsetX || '0');
+  const currentY = parseFloat(btnYes.dataset.offsetY || '0');
+
+  const lerp = CONFIG.YES_MAGNET_SPEED;
+
+  const nextX = currentX + (targetX - currentX) * lerp;
+  const nextY = currentY + (targetY - currentY) * lerp;
+
+  btnYes.dataset.offsetX = nextX;
+  btnYes.dataset.offsetY = nextY;
+
+  const scale = btnYes.dataset.scale || '1';
+
+  btnYes.style.transform =
+    `scale(${scale}) translate(${nextX}px, ${nextY}px)`;
+
   requestAnimationFrame(attractYesButton);
 }
+
+attractYesButton();
+
 
 attractYesButton(); // ✅ Démarre la boucle
 
