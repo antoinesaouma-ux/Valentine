@@ -653,44 +653,6 @@ function handleNoClick() {
       }
       loop();
     }
-// 🧲 EFFET AIMANT : Le bouton "Oui" suit la souris
-function attractYesButton() {
-  if (!magnetActive) {
-    requestAnimationFrame(attractYesButton);
-    return;
-  }
-
-  const rect = btnYes.getBoundingClientRect();
-  const centerX = rect.left + rect.width / 2;
-  const centerY = rect.top + rect.height / 2;
-
-  const dx = mouseX - centerX;
-  const dy = mouseY - centerY;
-
-  const max = CONFIG.YES_MAX_OFFSET;
-
-  const targetX = rect.left + Math.max(-max, Math.min(dx, max));
-  const targetY = rect.top + Math.max(-max, Math.min(dy, max));
-
-  const currentX = parseFloat(btnYes.dataset.x);
-  const currentY = parseFloat(btnYes.dataset.y);
-
-  const lerp = CONFIG.YES_MAGNET_SPEED;
-
-  const nextX = currentX + (targetX - currentX) * lerp;
-  const nextY = currentY + (targetY - currentY) * lerp;
-
-  btnYes.dataset.x = nextX;
-  btnYes.dataset.y = nextY;
-
-  btnYes.style.left = `${nextX}px`;
-  btnYes.style.top = `${nextY}px`;
-  btnYes.style.transform = 'scale(1.35)';
-
-  requestAnimationFrame(attractYesButton);
-}
-
-attractYesButton(); // ✅ Démarre la boucle
 
     function spawnCats() {
       const screenW = window.innerWidth;
